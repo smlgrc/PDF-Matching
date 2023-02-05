@@ -1,0 +1,59 @@
+import json
+import os
+import PyPDF2
+import pandas
+import pywintypes
+import win32com.client
+from win32com.client.dynamic import CDispatch
+from datetime import datetime
+from PyPDF2 import PdfReader, PdfFileReader, PageObject
+import magic
+import zipfile
+from pptx import Presentation
+import os.path
+
+
+# base_path: str = os.path.join(r"C:\Users\sga\Desktop\email_testing\INDEXED CASI AND EMAIL JSON FILES\Customer files JSON Files")
+old_casi_path: str = os.path.normcase(r"C:\Users\sga\Documents\My Received Files\CASISupport Copied Local Files")
+old_email_path: str = os.path.normcase(r"C:\Users\sga\Desktop\email_testing\email_simulation_2")
+
+json_casi_path: str = os.path.normcase(r"C:\Users\sga\Desktop\email_testing\EXPERIMENTAL JSON FILES\Customer files JSON Files")
+json_randy_path: str = os.path.normcase(r"C:\Users\sga\Desktop\email_testing\EXPERIMENTAL JSON FILES\Randy Inbox Json Files")
+json_lisa1_path: str = os.path.normcase(r"")
+json_lisa2_path: str = os.path.normcase(r"")
+
+new_test_base_path: str = os.path.normcase(r"C:\CasiSupport-and-Email-Files")
+
+
+
+def json_filepath_rename(old_path, json_files_path):
+    for subdir, dirs, files in os.walk(json_files_path):
+        """
+        subdir = current parent folder name
+        dirs = list of directory names in subdir
+        files = list of file names in subdir
+        """
+        for file in files:
+            json_path = os.path.join(subdir, file)
+
+            new_list_of_dict: list = []
+            with open(json_path, 'r', encoding='utf-8') as jsonFile:
+                list_of_dict: list = json.load(jsonFile)
+
+                for dict in list_of_dict:
+                    file_path = os.path.normcase(dict['file_path'])
+                    new_path = os.path.normcase(file_path.replace(old_path, new_test_base_path))
+                    dict['file_path'] = new_path
+                    new_list_of_dict.append(dict)
+
+            with open(json_path, 'w', encoding='utf-8') as jsonFile:
+                json.dump(new_list_of_dict, jsonFile, indent=4)
+
+
+def main():
+    json_filepath_rename(old_casi_path, json_casi_path)
+    json_filepath_rename(old_email_path, json_randy_path)
+
+
+if __name__ == '__main__':
+    main()
