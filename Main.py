@@ -68,29 +68,6 @@ def merge_pdfs():
 
         # breakpoint()
 
-    # for subdir, dirs, files in os.walk(ref_file_path):
-    #     """
-    #     subdir = current parent folder name
-    #     dirs = list of directory names in subdir
-    #     files = list of file names in subdir
-    #     """
-    #     for file in files:
-    #         file_path = os.path.join(subdir, file)
-    #         root_and_ext = os.path.splitext(file_path)
-    #         root = root_and_ext[0]
-    #         ext = root_and_ext[1]
-    #
-    #         pdfFileObj = open(file_path, 'rb')
-    #         try:
-    #             pdfReader: PdfReader = PdfReader(pdfFileObj, strict=False)
-    #
-    #         except Exception as e:  # PyPDF2.errors.PdfReadError:
-    #             print(e)
-    #         pdfFileObj.close()
-    #
-    # # for base_ref_num, ref_num_matches:
-    # pass
-
 
 def create_pdf(ref_num_list: list, prefix: str, ext: str):
     # save FPDF() class into a
@@ -249,6 +226,7 @@ def main():
 
     # create_pdf(list_24_1, '24', '1')
     # create_pdf(list_24_2, '24', '2')
+    # create_pdf(list_24_2, '24', '3')
     # create_pdf(list_24_4, '24', '4')
     # create_pdf(list_25_1, '25', '1')
     # create_pdf(list_25_2, '25', '2')
