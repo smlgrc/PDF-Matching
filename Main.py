@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 import os
 import random
@@ -6,31 +7,23 @@ import PyPDF2
 from PyPDF2 import PageObject, PdfReader
 from fpdf import FPDF
 
+iterations = 500  # 1080 takes -> Program Run Time:0:30:31.011427
 prefix_list: list[str] = ['24', '25']
-ext_list: list[str] = ['1', '2', '3', '4', '5', '6', '7', '8']
+ext_list: list[str] = ['1', '2', '3', '4', '5', '6', '7', '8', '9a', '9b', '16', '16a']
+ref_file_path: str = r'C:\Users\samga\Documents\Work\Scandoc-Imaging\PDFs'
+output_path: str = r'C:\Users\samga\Documents\Work\Scandoc-Imaging\PDFs\Reference-Number-Invoices'
 
-ref_num_24: list[str] = ['241442', '241996', '242136', '243223', '243977', '244459', '244860', '247155', '248947', '248975']
-ref_num_25: list[str] = ['251591', '251656', '251891', '252316', '252777', '253207', '254770', '256442', '256703', '256853']
 
-unique_master_list: list[str] = ['241442', '241996', '242136', '243223', '243977', '244459', '244860', '247155', '248947', '248975',
-                                 '251591', '251656', '251891', '252316', '252777', '253207', '254770', '256442', '256703', '256853']
+def sort_ref_num_list(ref_num_list):
+    location_list = []
+    for ref_num in ref_num_list:
+        location_parts = re.findall(r'\d+', ref_num.partition('-')[2])
+        location = ''.join(location_parts)
+        location_list.append(int(location))
 
-unique_master_dict: dict = {'241442': [], '241996': [], '242136': [], '243223': [], '243977': [], '244459': [], '244860': [], '247155': [], '248947': [], '248975': [],
-                            '251591': [], '251656': [], '251891': [], '252316': [], '252777': [], '253207': [], '254770': [], '256442': [], '256703': [], '256853': []}
-
-list_24_1 = ['248975-1', '243223-1', '247155-1', '241996-1', '244860-1', '241442-1', '243977-1', '244459-1', '248947-1', '242136-1']
-list_24_2 = ['241996-2', '244459-2', '247155-2', '243223-2', '244860-2', '242136-2', '248975-2', '241442-2', '243977-2', '248947-2']
-list_24_4 = ['243223-4', '247155-4', '244459-4', '242136-4', '248975-4', '241442-4', '244860-4', '248947-4', '241996-4', '243977-4']
-
-list_25_1 = ['251891-1', '254770-1', '251591-1', '253207-1', '252316-1', '251656-1', '252777-1', '256703-1', '256853-1', '256442-1']
-list_25_2 = ['252316-2', '256703-2', '253207-2', '256853-2', '252777-2', '251591-2', '254770-2', '251891-2', '256442-2', '251656-2']
-list_25_4 = ['256442-4', '254770-4', '256703-4', '251891-4', '252316-4', '256853-4', '253207-4', '251656-4', '251591-4', '252777-4']
-
-master_list = ['248975-1', '243223-1', '247155-1', '241996-1', '244860-1', '241442-1', '243977-1', '244459-1', '248947-1', '242136-1', '241996-2', '244459-2', '247155-2', '243223-2', '244860-2', '242136-2', '248975-2', '241442-2', '243977-2', '248947-2', '243223-4', '247155-4', '244459-4', '242136-4', '248975-4', '241442-4', '244860-4', '248947-4', '241996-4', '243977-4', '251891-1', '254770-1', '251591-1', '253207-1', '252316-1', '251656-1', '252777-1', '256703-1', '256853-1', '256442-1', '252316-2', '256703-2', '253207-2', '256853-2', '252777-2', '251591-2', '254770-2', '251891-2', '256442-2', '251656-2', '256442-4', '254770-4', '256703-4', '251891-4', '252316-4', '256853-4', '253207-4', '251656-4', '251591-4', '252777-4']
-sorted_master_list = ['241442-1', '241442-2', '241442-4', '241996-1', '241996-2', '241996-4', '242136-1', '242136-2', '242136-4', '243223-1', '243223-2', '243223-4', '243977-1', '243977-2', '243977-4', '244459-1', '244459-2', '244459-4', '244860-1', '244860-2', '244860-4', '247155-1', '247155-2', '247155-4', '248947-1', '248947-2', '248947-4', '248975-1', '248975-2', '248975-4', '251591-1', '251591-2', '251591-4', '251656-1', '251656-2', '251656-4', '251891-1', '251891-2', '251891-4', '252316-1', '252316-2', '252316-4', '252777-1', '252777-2', '252777-4', '253207-1', '253207-2', '253207-4', '254770-1', '254770-2', '254770-4', '256442-1', '256442-2', '256442-4', '256703-1', '256703-2', '256703-4', '256853-1', '256853-2', '256853-4']
-
-ref_file_path: str = r'C:\Users\samga\Documents\GitHub\PDF-Matching\PDFs'
-output_path: str = r'C:\Users\samga\Documents\GitHub\PDF-Matching\PDFs\Reference-Number-Invoices'
+    new_location_list, new_ref_num_list = zip(*sorted(zip(location_list, ref_num_list)))
+    new_ref_num_list = list(new_ref_num_list)
+    return new_ref_num_list
 
 
 def merge_pdfs(master_dict):
@@ -44,10 +37,17 @@ def merge_pdfs(master_dict):
         pdfOutputPath = os.path.join(output_path, f'{base_ref_num}-invoices.pdf')
         pdfOutputFile = open(pdfOutputPath, 'wb')
         pdfWriter = PyPDF2.PdfWriter()
-        for match_dict in ref_num_matches:
-            file_path = os.path.join(match_dict['file_path'])
-            field_num: str = match_dict['field_num']
-            page_num: str = match_dict['page_num']
+
+        # for match_dict in ref_num_matches:
+        ref_num_keys = list(ref_num_matches.keys())
+        ref_num_keys.sort()
+        ref_num_keys = sort_ref_num_list(ref_num_keys)
+        sorted_ref_num_matches = {i: ref_num_matches[i] for i in ref_num_keys}
+        # breakpoint()
+        for ref_num, ref_num_attributes in sorted_ref_num_matches.items():
+            file_path = os.path.join(ref_num_attributes['file_path'])
+            field_num: str = ref_num_attributes['field_num']
+            page_num: str = ref_num_attributes['page_num']
 
             # with open(file_path, 'rb') as pdfFileObj:
             pdfFileObj = open(file_path, 'rb')
@@ -96,8 +96,9 @@ def create_pdf(ref_num_list: list, prefix: str, ext: str):
                      ln=2, align='L')
 
     # save the pdf with name .pdf
-    pdf_file_path: str = rf"C:\Users\samga\Documents\GitHub\PDF-Matching\PDFs\location-{prefix}-{ext}.pdf"
-    output_path = os.path.join(pdf_file_path)
+    # pdf_file_path: str = rf"C:\Users\samga\Documents\GitHub\PDF-Matching\PDFs\location-{prefix}-{ext}.pdf"
+    # output_path = os.path.join(pdf_file_path)
+    output_path = os.path.join(ref_file_path, rf'location-{prefix}-{ext}.pdf')
     pdf.output(output_path)
 
 
@@ -169,7 +170,8 @@ def combine_and_sort(base_master_dict, base_master_list):
 
                     # for j, ref_num in enumerate(sorted_master_list):
                     for j, ref_num in enumerate(base_master_list):
-                        if ref_num in pageTxt:
+                        ref_num_new_line = f'{ref_num}\n'
+                        if ref_num_new_line in pageTxt:
                             for key in base_master_dict.keys():
                                 if key in pageTxt:
                                     # breakpoint()
@@ -181,7 +183,9 @@ def combine_and_sort(base_master_dict, base_master_list):
                                         'field_num': field_num,
                                         'page_num': page_num
                                     }
-                                    base_master_dict[key].append(ref_num_match)
+                                    # base_master_dict[key].append(ref_num_match)
+                                    base_master_dict[key][ref_num] = ref_num_match
+
                                     # for k,v in base_master_dict.items(): print(k, v)
                                     # breakpoint()
                                     # print('whatever')
@@ -189,7 +193,6 @@ def combine_and_sort(base_master_dict, base_master_list):
             except Exception as e:  # PyPDF2.errors.PdfReadError:
                 print(e)
             pdfFileObj.close()
-
     return base_master_dict
 
     # for k,v in unique_master_dict.items():
@@ -221,33 +224,37 @@ def test():
 def main():
     start_time = datetime.now()
 
-    iterations = 2
-
+    print('generating random reference numbers')
     ref_base_list_24 = generate_random_ref_num_list('24', iterations)
     ref_base_list_25 = generate_random_ref_num_list('25', iterations)
 
+    print('shuffling and adding location to base reference numbers')
     ref_list_24 = shuffle_and_add_location_ext(ref_base_list_24)
     ref_list_25 = shuffle_and_add_location_ext(ref_base_list_25)
 
+    print('creating pdfs')
     for ext in ext_list:
         create_pdf(ref_list_24, '24', ext)
     for ext in ext_list:
         create_pdf(ref_list_25, '25', ext)
 
+    print('creating base master dictionary')
     base_master_dict = {}
     for ref in ref_base_list_24:
-        base_master_dict[str(ref)] = []
+        base_master_dict[str(ref)] = {}
     for ref in ref_base_list_25:
-        base_master_dict[str(ref)] = []
+        base_master_dict[str(ref)] = {}
 
+    print('creating base master list')
     base_master_list = []
     for ref in ref_list_24:
         base_master_list.append(ref)
     for ref in ref_list_25:
         base_master_list.append(ref)
 
+    print('combining and sorting')
     master_dict = combine_and_sort(base_master_dict, base_master_list)
-
+    print('merging pdfs')
     merge_pdfs(master_dict)
 
     # test()
