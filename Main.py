@@ -7,7 +7,7 @@ from PyPDF2 import PageObject, PdfReader
 from fpdf import FPDF
 
 prefix_list: list[str] = ['24', '25']
-ext_list: list[str] = ['1', '2', '4']
+ext_list: list[str] = ['1', '2', '3', '4', '5', '6', '7', '8']
 
 ref_num_24: list[str] = ['241442', '241996', '242136', '243223', '243977', '244459', '244860', '247155', '248947', '248975']
 ref_num_25: list[str] = ['251591', '251656', '251891', '252316', '252777', '253207', '254770', '256442', '256703', '256853']
@@ -33,13 +33,13 @@ ref_file_path: str = r'C:\Users\samga\Documents\GitHub\PDF-Matching\PDFs'
 output_path: str = r'C:\Users\samga\Documents\GitHub\PDF-Matching\PDFs\Reference-Number-Invoices'
 
 
-def merge_pdfs():
+def merge_pdfs(master_dict):
     """
         TODO:
         1. Create PdfFileReader objects for each PDF that was used to extract pages
         2. Iterate through unique master dict and create an output pdf
     """
-    for base_ref_num, ref_num_matches in unique_master_dict.items():
+    for base_ref_num, ref_num_matches in master_dict.items():
         print(f'Processing {base_ref_num}...')
         pdfOutputPath = os.path.join(output_path, f'{base_ref_num}-invoices.pdf')
         pdfOutputFile = open(pdfOutputPath, 'wb')
@@ -75,24 +75,25 @@ def create_pdf(ref_num_list: list, prefix: str, ext: str):
     pdf = FPDF()
 
     for ref_num in ref_num_list:
-        # Add a page
-        pdf.add_page()
+        if ref_num.endswith(f'-{ext}'):
+            # Add a page
+            pdf.add_page()
 
-        # set style and size of font
-        # that you want in the pdf
-        pdf.set_font("Arial", size=15)
+            # set style and size of font
+            # that you want in the pdf
+            pdf.set_font("Arial", size=15)
 
-        # add another cell
-        pdf.cell(200, 10, txt="Scandoc Imaging.",
-                 ln=2, align='L')
+            # add another cell
+            pdf.cell(200, 10, txt="Scandoc Imaging.",
+                     ln=2, align='L')
 
-        # create a cell
-        pdf.cell(175, 10, txt=f'Ref: {ref_num}',
-                 ln=1, align='R')
+            # create a cell
+            pdf.cell(175, 10, txt=f'Ref: {ref_num}',
+                     ln=1, align='R')
 
-        # add another cell
-        pdf.cell(200, 10, txt="Extra text here.",
-                 ln=2, align='L')
+            # add another cell
+            pdf.cell(200, 10, txt="Extra text here.",
+                     ln=2, align='L')
 
     # save the pdf with name .pdf
     pdf_file_path: str = rf"C:\Users\samga\Documents\GitHub\PDF-Matching\PDFs\location-{prefix}-{ext}.pdf"
@@ -100,19 +101,17 @@ def create_pdf(ref_num_list: list, prefix: str, ext: str):
     pdf.output(output_path)
 
 
-def shuffle_and_add_location_ext():# -> list[str]:
-    ref1: list[str] = []
-    ref2: list[str] = []
+def shuffle_and_add_location_ext(ref_num_list) -> list[str]:
+    ref: list[str] = []
 
     for ext in ext_list:
-        random.shuffle(ref_num_24)
-        random.shuffle(ref_num_25)
-        for i in range(10):
-            ref1.append(ref_num_24[i] + '-' + ext)
-            ref2.append(ref_num_25[i] + '-' + ext)
+        random.shuffle(ref_num_list)
+        for i in range(len(ref_num_list)):
+            ref.append(str(ref_num_list[i]) + '-' + ext)
 
-    print(ref1)
-    print(ref2)
+    # for ref_num in ref:
+    #     print(ref_num)
+    return ref
 
 
 def generate_random_ref_num_list(prefix: str, iterations: int) -> list[int]:
@@ -143,12 +142,7 @@ def generate_random_ref_num_list(prefix: str, iterations: int) -> list[int]:
     return ref_num_list
 
 
-def print_ref_num_list():
-    print(ref_num_24)
-    print(ref_num_25)
-
-
-def combine_and_sort():
+def combine_and_sort(base_master_dict, base_master_list):
     for subdir, dirs, files in os.walk(ref_file_path):
         """
         subdir = current parent folder name
@@ -161,23 +155,24 @@ def combine_and_sort():
             root = root_and_ext[0]
             ext = root_and_ext[1]
 
-            # Todo: find a way to seperate reference number and location and create a separate file with it
             pdfFileObj = open(file_path, 'rb')
             try:
                 pdfReader: PdfReader = PdfReader(pdfFileObj, strict=False)
-                print('Number of PDF pages = ' + str(len(pdfReader.pages)))
+                # print('Number of PDF pages = ' + str(len(pdfReader.pages)))
 
                 pdfPages: list[PageObject] = pdfReader.pages
 
-                print('\n=== Page Extracts ===')
+                # print('\n=== Page Extracts ===')
                 for i in range(len(pdfPages)):
                     pageObj: PyPDF2._page.PageObject = pdfReader.pages[i]
                     pageTxt: str = pageObj.extract_text()
 
-                    for j, ref_num in enumerate(sorted_master_list):
+                    # for j, ref_num in enumerate(sorted_master_list):
+                    for j, ref_num in enumerate(base_master_list):
                         if ref_num in pageTxt:
-                            for k, v in unique_master_dict.items():
-                                if k in pageTxt:
+                            for key in base_master_dict.keys():
+                                if key in pageTxt:
+                                    # breakpoint()
                                     split_word = 'Ref: '
                                     field_num = pageTxt.partition(split_word)[2].partition("\n")[0]
                                     page_num = pdfReader.get_page_number(pageObj)
@@ -186,17 +181,21 @@ def combine_and_sort():
                                         'field_num': field_num,
                                         'page_num': page_num
                                     }
-                                    unique_master_dict[k].append(ref_num_match)
+                                    base_master_dict[key].append(ref_num_match)
+                                    # for k,v in base_master_dict.items(): print(k, v)
                                     # breakpoint()
+                                    # print('whatever')
 
             except Exception as e:  # PyPDF2.errors.PdfReadError:
                 print(e)
             pdfFileObj.close()
 
-    for k,v in unique_master_dict.items():
-        print()
-        print(f'key = {k}')
-        print(f'value = {v}')
+    return base_master_dict
+
+    # for k,v in unique_master_dict.items():
+    #     print()
+    #     print(f'key = {k}')
+    #     print(f'value = {v}')
         # for dictionary in v:
         #     for k2, v2 in dictionary:
         #         print(f'key2 = {k2}')
@@ -221,19 +220,35 @@ def test():
 
 def main():
     start_time = datetime.now()
-    # print_ref_num_list()
-    # shuffle_and_add_location_ext()
 
-    # create_pdf(list_24_1, '24', '1')
-    # create_pdf(list_24_2, '24', '2')
-    # create_pdf(list_24_2, '24', '3')
-    # create_pdf(list_24_4, '24', '4')
-    # create_pdf(list_25_1, '25', '1')
-    # create_pdf(list_25_2, '25', '2')
-    # create_pdf(list_25_4, '25', '4')
+    iterations = 2
 
-    combine_and_sort()
-    merge_pdfs()
+    ref_base_list_24 = generate_random_ref_num_list('24', iterations)
+    ref_base_list_25 = generate_random_ref_num_list('25', iterations)
+
+    ref_list_24 = shuffle_and_add_location_ext(ref_base_list_24)
+    ref_list_25 = shuffle_and_add_location_ext(ref_base_list_25)
+
+    for ext in ext_list:
+        create_pdf(ref_list_24, '24', ext)
+    for ext in ext_list:
+        create_pdf(ref_list_25, '25', ext)
+
+    base_master_dict = {}
+    for ref in ref_base_list_24:
+        base_master_dict[str(ref)] = []
+    for ref in ref_base_list_25:
+        base_master_dict[str(ref)] = []
+
+    base_master_list = []
+    for ref in ref_list_24:
+        base_master_list.append(ref)
+    for ref in ref_list_25:
+        base_master_list.append(ref)
+
+    master_dict = combine_and_sort(base_master_dict, base_master_list)
+
+    merge_pdfs(master_dict)
 
     # test()
     end_time = datetime.now()
