@@ -143,7 +143,7 @@ def generate_random_ref_num_list(prefix: str, iterations: int) -> list[int]:
     return ref_num_list
 
 
-def combine_and_sort(base_master_dict, base_master_list):
+def search_and_save_locations(base_master_dict, base_master_list):
     for subdir, dirs, files in os.walk(ref_file_path):
         """
         subdir = current parent folder name
@@ -253,17 +253,13 @@ def main():
         base_master_list.append(ref)
 
     print('combining and sorting')
-    master_dict = combine_and_sort(base_master_dict, base_master_list)
+    master_dict = search_and_save_locations(base_master_dict, base_master_list)
     print('merging pdfs')
     merge_pdfs(master_dict)
 
-    # test()
     end_time = datetime.now()
-
     run_time = end_time - start_time
     print('\nProgram Run Time:', run_time)
-
-    # breakpoint()
 
 
 if __name__ == '__main__':
