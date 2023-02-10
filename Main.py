@@ -13,8 +13,8 @@ from fpdf import FPDF
 iterations = 1200  # 1080 takes -> Program Run Time:0:30:31.011427
 prefix_list: list[str] = ['24', '25']
 ext_list: list[str] = ['1', '2', '3', '4', '5', '6', '7', '8', '9a', '9b', '16', '16a']
-ref_file_path: str = r'C:\Users\samga\Documents\Work\Scandoc-Imaging\PDFs'
-output_path: str = r'C:\Users\samga\Documents\Work\Scandoc-Imaging\PDFs\Reference-Number-Invoices'
+ref_file_path: str = r'C:\Users\USERNAME\Documents\Work\Scandoc-Imaging\PDFs'
+output_path: str = r'C:\Users\USERNAME\Documents\Work\Scandoc-Imaging\PDFs\Reference-Number-Invoices'
 
 
 def sort_ref_num_list(ref_num_list):
@@ -53,10 +53,6 @@ def merge_pdfs(master_dict):
             ref_num: str = ref_num_attributes['ref_num']
             page_num: str = ref_num_attributes['page_num']
 
-            # print(f'\n  ref num = {ref_num}')
-            # print(f'file path = {file_path}')
-            # print(f'page num  = {page_num}\n')
-
             pdfFileObj = open(file_path, 'rb')
             try:
                 pdfReader: PdfReader = PdfReader(pdfFileObj, strict=False)
@@ -68,14 +64,6 @@ def merge_pdfs(master_dict):
                 print(e)
             pdfFileObj.close()
         pdfOutputFile.close()
-        # print(f'\n  ref num = {ref_num}')
-        # print(f'file path = {file_path}')
-        # print(f'page num  = {page_num}\n')
-
-        # file_handle = fitz.open(file_path)
-        # file_handle.delete_page(int(page_num))
-        # file_handle.save(file_path, incremental=True, encryption=0)
-
 
 
 def create_pdf(ref_num_list: list, prefix: str, ext: str):
@@ -104,9 +92,6 @@ def create_pdf(ref_num_list: list, prefix: str, ext: str):
             pdf.cell(200, 10, txt="Invoice information.",
                      ln=2, align='L')
 
-    # save the pdf with name .pdf
-    # pdf_file_path: str = rf"C:\Users\samga\Documents\GitHub\PDF-Matching\PDFs\location-{prefix}-{ext}.pdf"
-    # output_path = os.path.join(pdf_file_path)
     output_path = os.path.join(ref_file_path, rf'location-{prefix}-{ext}.pdf')
     pdf.output(output_path)
 
@@ -119,8 +104,6 @@ def shuffle_and_add_location_ext(ref_num_list) -> list[str]:
         for i in range(len(ref_num_list)):
             ref.append(str(ref_num_list[i]) + '-' + ext)
 
-    # for ref_num in ref:
-    #     print(ref_num)
     return ref
 
 
@@ -189,42 +172,12 @@ def search_and_save_locations(base_master_dict, base_master_list):
                                         'ref_num': ref_num,
                                         'page_num': page_num
                                     }
-                                    # base_master_dict[key].append(ref_num_match)
                                     base_master_dict[key][ref_num] = ref_num_match
-
-                                    # for k,v in base_master_dict.items(): print(k, v)
-                                    # breakpoint()
-                                    # print('whatever')
 
             except Exception as e:  # PyPDF2.errors.PdfReadError:
                 print(e)
             pdfFileObj.close()
     return base_master_dict
-
-    # for k,v in unique_master_dict.items():
-    #     print()
-    #     print(f'key = {k}')
-    #     print(f'value = {v}')
-        # for dictionary in v:
-        #     for k2, v2 in dictionary:
-        #         print(f'key2 = {k2}')
-        #         print(f'value2 = {v2}')
-
-
-def test():
-    my_string = 'Scandoc Imaging.\nRef: 248975-1\nExtra text here.'#"Python is one of the most popular programming languages"
-
-    split_word = 'Ref: '
-
-    print("Original string: " + str(my_string))
-
-    print("Split string: " + str(split_word))
-
-    res_str = my_string.partition(split_word)[2].partition("\n")[0]
-    # breakpoint()
-    # new_str = res_str.partition("\n")[0]
-
-    print("String result after the occurrence substring: " + res_str)
 
 
 def main():
