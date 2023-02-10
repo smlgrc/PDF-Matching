@@ -7,7 +7,10 @@ import PyPDF2
 from PyPDF2 import PageObject, PdfReader
 from fpdf import FPDF
 
-iterations = 500  # 1080 takes -> Program Run Time:0:30:31.011427
+# 1080 takes -> Program Run Time:0:30:31.011427
+# 1200 takes -> Program Run Time:0:37:31.029105
+
+iterations = 1200  # 1080 takes -> Program Run Time:0:30:31.011427
 prefix_list: list[str] = ['24', '25']
 ext_list: list[str] = ['1', '2', '3', '4', '5', '6', '7', '8', '9a', '9b', '16', '16a']
 ref_file_path: str = r'C:\Users\samga\Documents\Work\Scandoc-Imaging\PDFs'
@@ -32,41 +35,47 @@ def merge_pdfs(master_dict):
         1. Create PdfFileReader objects for each PDF that was used to extract pages
         2. Iterate through unique master dict and create an output pdf
     """
+    file_path = ''
+    page_num = ''
+    ref_num = ''
     for base_ref_num, ref_num_matches in master_dict.items():
         print(f'Processing {base_ref_num}...')
         pdfOutputPath = os.path.join(output_path, f'{base_ref_num}-invoices.pdf')
         pdfOutputFile = open(pdfOutputPath, 'wb')
         pdfWriter = PyPDF2.PdfWriter()
 
-        # for match_dict in ref_num_matches:
         ref_num_keys = list(ref_num_matches.keys())
         ref_num_keys.sort()
         ref_num_keys = sort_ref_num_list(ref_num_keys)
         sorted_ref_num_matches = {i: ref_num_matches[i] for i in ref_num_keys}
-        # breakpoint()
-        for ref_num, ref_num_attributes in sorted_ref_num_matches.items():
+        for ref_num_match, ref_num_attributes in sorted_ref_num_matches.items():
             file_path = os.path.join(ref_num_attributes['file_path'])
-            field_num: str = ref_num_attributes['field_num']
+            ref_num: str = ref_num_attributes['ref_num']
             page_num: str = ref_num_attributes['page_num']
 
-            # with open(file_path, 'rb') as pdfFileObj:
+            # print(f'\n  ref num = {ref_num}')
+            # print(f'file path = {file_path}')
+            # print(f'page num  = {page_num}\n')
+
             pdfFileObj = open(file_path, 'rb')
             try:
                 pdfReader: PdfReader = PdfReader(pdfFileObj, strict=False)
                 pageObj = pdfReader.pages[int(page_num)]
                 pdfWriter.add_page(pageObj)
 
-                # pdfOutputFile = open(pdfOutputPath, 'wb')
                 pdfWriter.write(pdfOutputFile)
-                # with open(pdfOutputPath, 'wb') as pdfOutputFile:
-                #     pdfWriter.write(pdfOutputFile)
-
             except Exception as e:  # PyPDF2.errors.PdfReadError:
                 print(e)
             pdfFileObj.close()
         pdfOutputFile.close()
+        # print(f'\n  ref num = {ref_num}')
+        # print(f'file path = {file_path}')
+        # print(f'page num  = {page_num}\n')
 
-        # breakpoint()
+        # file_handle = fitz.open(file_path)
+        # file_handle.delete_page(int(page_num))
+        # file_handle.save(file_path, incremental=True, encryption=0)
+
 
 
 def create_pdf(ref_num_list: list, prefix: str, ext: str):
@@ -92,7 +101,7 @@ def create_pdf(ref_num_list: list, prefix: str, ext: str):
                      ln=1, align='R')
 
             # add another cell
-            pdf.cell(200, 10, txt="Extra text here.",
+            pdf.cell(200, 10, txt="Invoice information.",
                      ln=2, align='L')
 
     # save the pdf with name .pdf
@@ -159,11 +168,8 @@ def search_and_save_locations(base_master_dict, base_master_list):
             pdfFileObj = open(file_path, 'rb')
             try:
                 pdfReader: PdfReader = PdfReader(pdfFileObj, strict=False)
-                # print('Number of PDF pages = ' + str(len(pdfReader.pages)))
-
                 pdfPages: list[PageObject] = pdfReader.pages
 
-                # print('\n=== Page Extracts ===')
                 for i in range(len(pdfPages)):
                     pageObj: PyPDF2._page.PageObject = pdfReader.pages[i]
                     pageTxt: str = pageObj.extract_text()
@@ -176,11 +182,11 @@ def search_and_save_locations(base_master_dict, base_master_list):
                                 if key in pageTxt:
                                     # breakpoint()
                                     split_word = 'Ref: '
-                                    field_num = pageTxt.partition(split_word)[2].partition("\n")[0]
+                                    ref_num = pageTxt.partition(split_word)[2].partition("\n")[0]
                                     page_num = pdfReader.get_page_number(pageObj)
                                     ref_num_match = {
                                         'file_path': file_path,
-                                        'field_num': field_num,
+                                        'ref_num': ref_num,
                                         'page_num': page_num
                                     }
                                     # base_master_dict[key].append(ref_num_match)
