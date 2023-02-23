@@ -11,13 +11,38 @@ file_folder_path: str = os.path.join(r"C:\Users\samga\Documents\Work\Scandoc-Ima
 location_folder_path: str = os.path.join(r"C:\Users\samga\Documents\Work\Scandoc-Imaging\DEMO\KAMI_FILES\location_folder")
 invoice_folder_path: str = os.path.join(r"C:\Users\samga\Documents\Work\Scandoc-Imaging\DEMO\KAMI_FILES\invoice_folder")
 logs_folder_path: str = os.path.join(r"C:\Users\samga\Documents\Work\Scandoc-Imaging\DEMO\KAMI_FILES\logs")
+letter_file_path: str = os.path.join(file_folder_path, 'letter.pdf')
+case_file_path: str = os.path.join(file_folder_path, 'case.pdf')
 
-def ref_num_list_extract_from_excel_file() -> list:
+
+# file_folder_path: str = os.path.join(r"C:\Users\Sam\Documents\Personal\Work\Scandoc Imaging\KAMI_FILES")
+# location_folder_path: str = os.path.join(r"C:\Users\Sam\Documents\Personal\Work\Scandoc Imaging\KAMI_FILES\location_folder")
+# invoice_folder_path: str = os.path.join(r"C:\Users\Sam\Documents\Personal\Work\Scandoc Imaging\KAMI_FILES\invoice_folder")
+# logs_folder_path: str = os.path.join(r"C:\Users\Sam\Documents\Personal\Work\Scandoc Imaging\KAMI_FILES\logs")
+
+
+master_dict: dict = {}
+master_list: list = []
+read_pages_dict: dict = {}
+
+
+# def initialize_read_pages_dict():
+#     global read_pages_dict
+#     read_pages_dict[letter_file_path] = set()
+#     read_pages_dict[case_file_path] = set()
+#     for subdir, dirs, files in os.walk(location_folder_path):
+#         for file in files:
+#             file_path = os.path.join(subdir, file)
+#             read_pages_dict[file_path] = set()
+
+
+def initialize_master_dict():
+    global master_list, master_dict
     ext: str = '.xlsx'
     excel_file_name: str = 'Sheet1.xlsx'
     excel_file_path: str = os.path.join(file_folder_path, excel_file_name)
 
-    base_ref_num_list: list = []
+    # base_ref_num_list: list = []
     eng: str = "xlrd"
 
     if ext.lower() == '.xlsx' or ext.lower() == '.xlsm':
@@ -28,90 +53,100 @@ def ref_num_list_extract_from_excel_file() -> list:
     column_name: str = 'Order No'
     df = pandas.read_excel(excel_file_path)[[column_name]]
     for i in range(len(df)):
-        base_ref_num_list.append(str(df[column_name].iloc[i]))
+        master_list.append(str(df[column_name].iloc[i]))
 
-    return base_ref_num_list
-
-
-def create_master_dict(master_list) -> dict:
-    base_master_dict: dict = {}
+    # initialize master_list
     for ref in master_list:
-        base_master_dict[ref] = {}
-
-    return base_master_dict
+        master_dict[ref] = {}
 
 
-def process_letters_pdf(file_path, master_dict) -> dict:
-    counter: int = 0
-    pdfFileObj = open(file_path, 'rb')
+def process_letters_pdf():
+    global master_dict, letter_file_path
+    page: int = 0
+    pdfFileObj = open(letter_file_path, 'rb')
     try:
         pdfReader: PdfReader = PdfReader(pdfFileObj, strict=False)
         pdfPages: list[PageObject] = pdfReader.pages
 
         for i in range(len(pdfPages)):
             pageObj: PyPDF2._page.PageObject = pdfReader.pages[i]
+            page_num = pdfReader.get_page_number(pageObj)
             pageTxt: str = pageObj.extract_text().lower()
-            # print(pageTxt)
-            # print(f'\n\nOUTER INDEX = {i}\n\n')
-            # breakpoint()
 
-            # breakpoint()
-            for j, base_ref_num in enumerate(list(master_dict.keys())):
-                # print(f'\nbase ref num = {base_ref_num}')
-                # print('PAGE TEXT')
-                # print(pageTxt)
-                # print(f'\n\nINNER INDEX = {j}\n\n')
-                if base_ref_num in pageTxt:
-                    # breakpoint()
-                    split_word = 'Ref: '.lower()
-                    ref_num_extract = pageTxt.partition(split_word)[2].partition("\n")[0].strip()
-                    page_num = pdfReader.get_page_number(pageObj)
-                    ref_num_match = {
-                        'file_path': file_path,
-                        'page_num': page_num
-                    }
-                    counter += 1
-                    ref_num_extract = f'{ref_num_extract}-letter-{str(counter)}'
-                    master_dict[base_ref_num][ref_num_extract] = ref_num_match
-                    if counter == 2:
-                        counter = 0
-                    # print('\n\nBREAKING\n\n')
-                    break
+            if pageTxt == '' or pageTxt.isspace():
+                continue
 
+            split_word = 'Ref: '.lower()
+            base_ref_num = pageTxt.partition(split_word)[2].partition("\n")[0].strip()
+
+            ref_num_match = {
+                'file_path': letter_file_path,
+                'page_num': page_num
+            }
+            page += 1
+            ref_num_letter = f'{base_ref_num}-letter-{str(page)}'
+            master_dict[base_ref_num][ref_num_letter] = ref_num_match
+            if page == 2:
+                page = 0
+
+            # for j, base_ref_num in enumerate(list(master_dict.keys())):
+            #     if base_ref_num in pageTxt:
+            #         ref_num_match = {
+            #             'file_path': letter_file_path,
+            #             'page_num': page_num
+            #         }
+            #
+            #         page += 1
+            #         ref_num_extract = f'{ref_num_extract}-letter-{str(page)}'
+            #         master_dict[base_ref_num][ref_num_extract] = ref_num_match
+            #         if page == 2:
+            #             page = 0
+            #         break
     except Exception as e:  # PyPDF2.errors.PdfReadError:
-        print(e)
+        print(f'{e} <- here')
     pdfFileObj.close()
-    return master_dict
 
 
-def process_case_pdf(file_path, master_dict) -> dict:
-    pdfFileObj = open(file_path, 'rb')
+def process_case_pdf():
+    global master_dict, case_file_path
+    pdfFileObj = open(case_file_path, 'rb')
     try:
         pdfReader: PdfReader = PdfReader(pdfFileObj, strict=False)
         pdfPages: list[PageObject] = pdfReader.pages
         for i in range(len(pdfPages)):
             pageObj: PyPDF2._page.PageObject = pdfReader.pages[i]
             pageTxt: str = pageObj.extract_text().lower()
-            for j, base_ref_num in enumerate(list(master_dict.keys())):
-                if base_ref_num in pageTxt:
-                    # breakpoint()
-                    split_word = 'Ref#: '.lower()
-                    ref_num_extract = pageTxt.partition(split_word)[2].partition(" ")[0].strip()
-                    page_num = pdfReader.get_page_number(pageObj)
-                    ref_num_match = {
-                        'file_path': file_path,
-                        'page_num': page_num
-                    }
-                    ref_num_extract = f'{ref_num_extract}-case'
-                    master_dict[base_ref_num][ref_num_extract] = ref_num_match
-                    break
+
+            if pageTxt == '' or pageTxt.isspace():
+                continue
+
+            split_word = 'Ref#: '.lower()
+            base_ref_num = pageTxt.partition(split_word)[2].partition(" ")[0].strip()
+            page_num = pdfReader.get_page_number(pageObj)
+
+            ref_num_match = {
+                'file_path': case_file_path,
+                'page_num': page_num
+            }
+            ref_num_case = f'{base_ref_num}-case'
+            master_dict[base_ref_num][ref_num_case] = ref_num_match
+
+            # for j, base_ref_num in enumerate(list(master_dict.keys())):
+            #     if base_ref_num in pageTxt:
+            #         ref_num_match = {
+            #             'file_path': case_file_path,
+            #             'page_num': page_num
+            #         }
+            #         ref_num_extract = f'{ref_num_extract}-case'
+            #         master_dict[base_ref_num][ref_num_extract] = ref_num_match
+            #         break
     except Exception as e:
-        print(e)
+        print(f'{e} <- here')
     pdfFileObj.close()
-    return master_dict
 
 
-def process_location_folder(master_dict) -> dict:
+def process_location_folder():
+    global master_dict
     for subdir, dirs, files in os.walk(location_folder_path):
         """
         subdir = current parent folder name
@@ -131,50 +166,54 @@ def process_location_folder(master_dict) -> dict:
 
                 for i in range(len(pdfPages)):
                     pageObj: PyPDF2._page.PageObject = pdfReader.pages[i]
+                    page_num = pdfReader.get_page_number(pageObj)
                     pageTxt: str = pageObj.extract_text().lower()
 
-                    for j, base_ref_num in enumerate(list(master_dict.keys())):
-                        if base_ref_num in pageTxt:
-                            split_word = 'Invoice Number: '.lower()
-                            ref_num_extract = pageTxt.partition(split_word)[2].replace(' ', '').partition("invoice")[0]
-                            page_num = pdfReader.get_page_number(pageObj)
-                            ref_num_match = {
-                                'file_path': file_path,
-                                'page_num': page_num
-                            }
-                            master_dict[base_ref_num][ref_num_extract] = ref_num_match
-                            # breakpoint()
-                            # print('BEFORE BREAK')
-                            break
+                    if pageTxt == '' or pageTxt.isspace():
+                        continue
+
+                    split_word = 'Invoice Number: '.lower()
+                    ref_num_extract = pageTxt.partition(split_word)[2].replace(' ', '').partition("invoice")[0]
+                    base_num_extract = ref_num_extract.partition('-')[0]
+                    # breakpoint()
+
+                    ref_num_match = {
+                        'file_path': file_path,
+                        'page_num': page_num
+                    }
+
+                    master_dict[base_num_extract][ref_num_extract] = ref_num_match
+
+                    # for j, base_ref_num in enumerate(list(master_dict.keys())):
+                    #     if base_ref_num in pageTxt:
+                    #
+                    #         ref_num_match = {
+                    #             'file_path': file_path,
+                    #             'page_num': page_num
+                    #         }
+                    #         master_dict[base_ref_num][ref_num_extract] = ref_num_match
+                    #         break
             except Exception as e:  # PyPDF2.errors.PdfReadError:
-                print(e)
+                print(f'{e} <- here')
             pdfFileObj.close()
-    return master_dict
 
 
-def save_json_log(master_dict):
+def save_json_log():
+    global master_dict
     logs_path = os.path.join(logs_folder_path, 'master_dict_log.txt')
     with open(logs_path, 'w') as master_dict_log:
         master_dict_log.write(json.dumps(master_dict, indent=4))
 
 
-def search_and_save_locations(base_master_dict) -> dict:
-    letter_file_name: str = 'letter.pdf'
-    letter_file_path: str = os.path.join(file_folder_path, letter_file_name)
-    base_master_dict = process_letters_pdf(letter_file_path, base_master_dict)
-
-    case_file_name: str = 'case.pdf'
-    case_file_path: str = os.path.join(file_folder_path, case_file_name)
-    base_master_dict = process_case_pdf(case_file_path, base_master_dict)
-
-    base_master_dict = process_location_folder(base_master_dict)
-
-    save_json_log(base_master_dict)
-
-    return base_master_dict
+def search_and_save_locations():
+    process_letters_pdf()
+    process_case_pdf()
+    process_location_folder()
+    save_json_log()
 
 
-def merge_pdfs(master_dict):
+def merge_pdfs():
+    global master_dict
     """
         TODO:
         1. Create PdfFileReader objects for each PDF that was used to extract pages
@@ -214,21 +253,21 @@ def merge_pdfs(master_dict):
 def run_script():
     start_time = datetime.now()
 
-    base_master_list: list = ref_num_list_extract_from_excel_file()
-    base_master_dict: dict = create_master_dict(base_master_list)
+    initialize_master_dict()
+    # initialize_read_pages_dict()  # not used
 
     print('combining and sorting')
-    master_dict = search_and_save_locations(base_master_dict)
+    search_and_save_locations()
 
     print('merging pdfs')
-    merge_pdfs(master_dict)
+    merge_pdfs()
 
     end_time = datetime.now()
     run_time = end_time - start_time
     print('\nProgram Run Time:', run_time)
 
-    user_input = input('Press ENTER to exit: ')
-    sys.exit(0)
+    # user_input = input('Press ENTER to exit: ')
+    # sys.exit(0)
 
 
 def main():
