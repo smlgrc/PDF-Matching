@@ -14,11 +14,8 @@ from fpdf import FPDF
 iterations = 500
 prefix_list: list[str] = ['24', '25']
 ext_list: list[str] = ['1', '2', '3', '4', '5', '6', '7', '8', '9a', '9b', '16', '16a']
-ref_file_path: str = os.path.join(r'C:\Users\samga\Documents\Work\Scandoc-Imaging\DEMO\KAMI_FILES')
-output_path: str = os.path.join(r'C:\Users\samga\Documents\Work\Scandoc-Imaging\DEMO\INVOICE_FOLDER')
-
-
-
+ref_file_path: str = os.path.join(r'PATH-TO-KAMI-FILES')
+output_path: str = os.path.join(r'PATH-TO-INVOICE-FOLDER')
 
 
 def generate_random_base_ref_num_list(prefix: str, iterations: int) -> list[int]:

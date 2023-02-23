@@ -6,34 +6,20 @@ import pandas
 from PyPDF2 import PageObject, PdfReader
 from datetime import datetime
 
+with open(os.path.join(r"C:\GitHub-Config-files\PDF-Matching.json"), 'r', encoding='utf-8') as jsonFile:
+    dict_of_paths: dict = json.load(jsonFile)
 
-file_folder_path: str = os.path.join(r"C:\Users\samga\Documents\Work\Scandoc-Imaging\DEMO\KAMI_FILES")
-location_folder_path: str = os.path.join(r"C:\Users\samga\Documents\Work\Scandoc-Imaging\DEMO\KAMI_FILES\location_folder")
-invoice_folder_path: str = os.path.join(r"C:\Users\samga\Documents\Work\Scandoc-Imaging\DEMO\KAMI_FILES\invoice_folder")
-logs_folder_path: str = os.path.join(r"C:\Users\samga\Documents\Work\Scandoc-Imaging\DEMO\KAMI_FILES\logs")
-letter_file_path: str = os.path.join(file_folder_path, 'letter.pdf')
-case_file_path: str = os.path.join(file_folder_path, 'case.pdf')
-
-
-# file_folder_path: str = os.path.join(r"C:\Users\Sam\Documents\Personal\Work\Scandoc Imaging\KAMI_FILES")
-# location_folder_path: str = os.path.join(r"C:\Users\Sam\Documents\Personal\Work\Scandoc Imaging\KAMI_FILES\location_folder")
-# invoice_folder_path: str = os.path.join(r"C:\Users\Sam\Documents\Personal\Work\Scandoc Imaging\KAMI_FILES\invoice_folder")
-# logs_folder_path: str = os.path.join(r"C:\Users\Sam\Documents\Personal\Work\Scandoc Imaging\KAMI_FILES\logs")
-
+file_folder_path: str = os.path.join(rf"{dict_of_paths['file_folder']}")
+location_folder_path: str = os.path.join(rf"{dict_of_paths['location_folder']}")
+invoice_folder_path: str = os.path.join(rf"{dict_of_paths['invoice_folder']}")
+logs_folder_path: str = os.path.join(rf"{dict_of_paths['logs_folder']}")
+letter_file_path: str = os.path.join(rf"{dict_of_paths['letter_file']}")
+case_file_path: str = os.path.join(rf"{dict_of_paths['case_file']}")
+# TODO: KAMI'S FILES WILL JUST BE HARDCODED, THEN AN EXECUTABLE WILL TAKE CARE OF THE REST
 
 master_dict: dict = {}
 master_list: list = []
 read_pages_dict: dict = {}
-
-
-# def initialize_read_pages_dict():
-#     global read_pages_dict
-#     read_pages_dict[letter_file_path] = set()
-#     read_pages_dict[case_file_path] = set()
-#     for subdir, dirs, files in os.walk(location_folder_path):
-#         for file in files:
-#             file_path = os.path.join(subdir, file)
-#             read_pages_dict[file_path] = set()
 
 
 def initialize_master_dict():
@@ -89,19 +75,6 @@ def process_letters_pdf():
             if page == 2:
                 page = 0
 
-            # for j, base_ref_num in enumerate(list(master_dict.keys())):
-            #     if base_ref_num in pageTxt:
-            #         ref_num_match = {
-            #             'file_path': letter_file_path,
-            #             'page_num': page_num
-            #         }
-            #
-            #         page += 1
-            #         ref_num_extract = f'{ref_num_extract}-letter-{str(page)}'
-            #         master_dict[base_ref_num][ref_num_extract] = ref_num_match
-            #         if page == 2:
-            #             page = 0
-            #         break
     except Exception as e:  # PyPDF2.errors.PdfReadError:
         print(f'{e} <- here')
     pdfFileObj.close()
@@ -131,15 +104,6 @@ def process_case_pdf():
             ref_num_case = f'{base_ref_num}-case'
             master_dict[base_ref_num][ref_num_case] = ref_num_match
 
-            # for j, base_ref_num in enumerate(list(master_dict.keys())):
-            #     if base_ref_num in pageTxt:
-            #         ref_num_match = {
-            #             'file_path': case_file_path,
-            #             'page_num': page_num
-            #         }
-            #         ref_num_extract = f'{ref_num_extract}-case'
-            #         master_dict[base_ref_num][ref_num_extract] = ref_num_match
-            #         break
     except Exception as e:
         print(f'{e} <- here')
     pdfFileObj.close()
@@ -184,15 +148,6 @@ def process_location_folder():
 
                     master_dict[base_num_extract][ref_num_extract] = ref_num_match
 
-                    # for j, base_ref_num in enumerate(list(master_dict.keys())):
-                    #     if base_ref_num in pageTxt:
-                    #
-                    #         ref_num_match = {
-                    #             'file_path': file_path,
-                    #             'page_num': page_num
-                    #         }
-                    #         master_dict[base_ref_num][ref_num_extract] = ref_num_match
-                    #         break
             except Exception as e:  # PyPDF2.errors.PdfReadError:
                 print(f'{e} <- here')
             pdfFileObj.close()
@@ -214,14 +169,6 @@ def search_and_save_locations():
 
 def merge_pdfs():
     global master_dict
-    """
-        TODO:
-        1. Create PdfFileReader objects for each PDF that was used to extract pages
-        2. Iterate through unique master dict and create an output pdf
-    """
-    file_path = ''
-    page_num = ''
-    ref_num = ''
     for base_ref_num, ref_num_matches in master_dict.items():
         print(f'Processing {base_ref_num}...')
         pdfOutputPath = os.path.join(invoice_folder_path, f'{base_ref_num}-invoices.pdf')
@@ -233,7 +180,6 @@ def merge_pdfs():
         # ref_num_keys = sort_ref_num_list(ref_num_keys)
         # sorted_ref_num_matches = {key: ref_num_matches[i] for key in ref_num_keys}
         for ref_num_match, ref_num_attributes in ref_num_matches.items():#sorted_ref_num_matches.items()
-            # ref_num: str = ref_num_attributes['ref_num']
             file_path = os.path.join(ref_num_attributes['file_path'])
             page_num: str = ref_num_attributes['page_num']
 
@@ -266,8 +212,8 @@ def run_script():
     run_time = end_time - start_time
     print('\nProgram Run Time:', run_time)
 
-    # user_input = input('Press ENTER to exit: ')
-    # sys.exit(0)
+    user_input = input('Press ENTER to exit: ')
+    sys.exit(0)
 
 
 def main():
