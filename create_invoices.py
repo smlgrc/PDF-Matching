@@ -9,12 +9,6 @@ from datetime import datetime
 with open(os.path.join(r"C:\GitHub-Config-Files\PDF-Matching.json"), 'r', encoding='utf-8') as jsonFile:
     dict_of_paths: dict = json.load(jsonFile)
 
-# base_folder_path: str = os.path.join(rf"{dict_of_paths['file_folder']}")
-# invoice_folder_path: str = os.path.join(rf"{dict_of_paths['location_folder']}")
-# output_folder_path: str = os.path.join(rf"{dict_of_paths['invoice_folder']}")
-# log_folder_path: str = os.path.join(rf"{dict_of_paths['logs_folder']}")
-# letter_file_path: str = os.path.join(rf"{dict_of_paths['letter_file']}")
-# case_file_path: str = os.path.join(rf"{dict_of_paths['case_file']}")
 base_folder_path: str = os.path.join(rf"{dict_of_paths.get('base_folder', 'No file folder path found')}")
 invoice_folder_path: str = os.path.join(rf"{dict_of_paths.get('invoice_folder', 'No location folder path found')}")
 output_folder_path: str = os.path.join(rf"{dict_of_paths.get('output_folder', 'No invoice folder path found')}")
