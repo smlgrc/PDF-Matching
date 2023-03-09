@@ -52,9 +52,11 @@ def process_letter_pdf():
             if pageTxt == '' or pageTxt.isspace():
                 continue
 
+            # if there ever is an issue, I can implement a solution that strips all spaces from pageTxt
             split_word = 'Ref: '.lower()
             base_ref_num = pageTxt.partition(split_word)[2].partition("\n")[0].strip()
 
+            # breakpoint()
             if base_ref_num in master_list:
                 ref_num_match = {
                     'file_path': letter_file_path,
@@ -214,11 +216,9 @@ def run_script():
     run_time = end_time - start_time
     print('\nProgram Run Time:', run_time)
 
-    user_input = input('\nPress ENTER to exit: ')
-    sys.exit(0)
-
 
 def main():
+    user_input = input('\nPress ENTER to run program: ')
     run_script()
 
 
