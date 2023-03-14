@@ -5,7 +5,7 @@ block_cipher = None
 
 
 a = Analysis(
-    ['create_invoices.py'],
+    ['Create_Invoices.py'],
     pathex=[],
     binaries=[],
     datas=[],
@@ -28,7 +28,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='create_invoices',
+    name='Create_Invoices',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

@@ -17,7 +17,6 @@ log_folder_path: str = os.path.join(rf"{dict_of_paths.get('log_folder', 'No logs
 excel_file_path: str = os.path.join(rf"{dict_of_paths.get('excel_file', 'No excel file found')}")
 letter_file_path: str = os.path.join(rf"{dict_of_paths.get('letter_file', 'No letter file path found')}")
 case_file_path: str = os.path.join(rf"{dict_of_paths.get('case_file', 'No case file path found')}")
-# TODO: KAMI'S FILES WILL JUST BE HARDCODED, THEN AN EXECUTABLE WILL TAKE CARE OF THE REST
 
 master_dict: dict = {}
 master_list: list = []
@@ -119,6 +118,13 @@ def process_invoice_folder():
             root = root_and_ext[0]
             ext = root_and_ext[1]
 
+            fileName_and_ext = os.path.splitext(file)
+            fileName = fileName_and_ext[0]
+            fileName_ext = fileName_and_ext[1].lower()
+            complete_filename = ''.join(fileName_and_ext)
+
+            print(f'    Processing File {fileName}...')
+
             # example
             # file_path = 'C:\\Users\\samga\\Documents\\Work\\Scandoc-Imaging\\DEMO\\KAMI_FILES\\location_folder\\L1'
             # file_name_tuple = os.path.splitext(os.path.basename(file_path)) # ('L1', '.pdf')
@@ -172,7 +178,7 @@ def search_and_save_locations():
 def merge_pdfs():
     global master_dict
     for base_ref_num, ref_num_matches in master_dict.items():
-        print(f'    Processing {base_ref_num}...')
+        print(f'    Processing {base_ref_num}-Invoices...')
         pdfOutputPath = os.path.join(output_folder_path, f'{base_ref_num}-Invoices.pdf')
         pdfOutputFile = open(pdfOutputPath, 'wb')
         pdfWriter = PyPDF2.PdfWriter()
@@ -220,8 +226,10 @@ def run_script():
 
 
 def main():
-    user_input = input('\nPress ENTER to run program: ')
+    user_input = input('\nPress ENTER to START program: ')
     run_script()
+    user_input = input('\nPress ENTER to END program: ')
+    exit()
 
 
 if __name__ == '__main__':
