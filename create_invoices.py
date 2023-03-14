@@ -1,5 +1,6 @@
 import os
 import sys
+import math
 import json
 import PyPDF2
 import pandas
@@ -29,7 +30,8 @@ def initialize_master_dict():
     column_name: str = 'Order No'
     df = pandas.read_excel(excel_file_path)[[column_name]]
     for i in range(len(df)):
-        master_list.append(str(df[column_name].iloc[i]))
+        if not math.isnan(df[column_name].iloc[i]):
+            master_list.append(str(int(df[column_name].iloc[i])))
 
     # initialize master_list
     for ref in master_list:
@@ -171,7 +173,7 @@ def merge_pdfs():
     global master_dict
     for base_ref_num, ref_num_matches in master_dict.items():
         print(f'    Processing {base_ref_num}...')
-        pdfOutputPath = os.path.join(output_folder_path, f'{base_ref_num}-invoices.pdf')
+        pdfOutputPath = os.path.join(output_folder_path, f'{base_ref_num}-Invoices.pdf')
         pdfOutputFile = open(pdfOutputPath, 'wb')
         pdfWriter = PyPDF2.PdfWriter()
 
