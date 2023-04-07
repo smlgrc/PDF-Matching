@@ -7,6 +7,7 @@ import pandas
 from PyPDF2 import PageObject, PdfReader
 from datetime import datetime
 
+
 with open(os.path.join(r"C:\GitHub-Config-Files\PDF-Matching.json"), 'r', encoding='utf-8') as jsonFile:
     dict_of_paths: dict = json.load(jsonFile)
 
