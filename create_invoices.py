@@ -59,6 +59,7 @@ def process_letter_pdf():
             base_ref_num = pageTxt.partition(split_word)[2].partition("\n")[0].strip()
 
             # breakpoint()
+
             if base_ref_num in master_list:
                 ref_num_match = {
                     'file_path': letter_file_path,
@@ -91,6 +92,8 @@ def process_case_pdf():
             split_word = 'Ref#: '.lower()
             base_ref_num = pageTxt.partition(split_word)[2].partition(" ")[0].strip()
             page_num = pdfReader.get_page_number(pageObj)
+
+            # breakpoint()
 
             if base_ref_num in master_list:
                 ref_num_match = {
@@ -145,9 +148,13 @@ def process_invoice_folder():
                     if pageTxt == '' or pageTxt.isspace():
                         continue
 
-                    split_word = 'Invoice Number: '.lower()
-                    ref_num_extract = pageTxt.partition(split_word)[2].replace(' ', '').partition("invoice")[0]
+                    pageTxt = pageTxt.replace(' ', '')
+
+                    split_word = 'invoicenumber:'.lower()
+                    ref_num_extract = pageTxt.partition(split_word)[2].partition("invoicedate:")[0]
                     base_num_extract = ref_num_extract.partition('-')[0]
+
+                    # breakpoint()
 
                     if base_num_extract in master_list:
                         ref_num_match = {
@@ -227,9 +234,9 @@ def run_script():
 
 
 def main():
-    user_input = input('\nPress ENTER to START program: ')
+    # user_input = input('\nPress ENTER to START program: ')
     run_script()
-    user_input = input('\nPress ENTER to END program: ')
+    # user_input = input('\nPress ENTER to END program: ')
     exit()
 
 
