@@ -1,3 +1,8 @@
-.idea/
-Config Files/
+Output/
 Program Files/
+dist/
+build/
+*.spec
+__pycache__/
+Config Files/
+.idea/

@@ -1,6 +1,7 @@
 import configparser
 import sys
 
+import testing
 import util
 import logging
 import os
@@ -12,8 +13,27 @@ GUI_CONFIG_PATH: str = os.path.join(CONFIG_FOLDER_PATH, r"gui_config.ini")
 OUTPUT_FOLDER_PATH: str = ""
 
 
-class Gui:
-    pass
+def set_paths_and_save_config_settings(values: dict, config: configparser.ConfigParser):
+    """
+    This function sets paths from values dictionary to global variables and saves them to
+    the gui_config.ini file so that when the user runs the program again, the previously
+    chosen paths will populate the input boxes.
+    :param values: file paths of previously user chosen folders
+    :param config: config object used to update and save file paths to config ini file
+    """
+    global SIGNED_BLANK_PDFS_FOLDER_PATH, OUTPUT_FOLDER_PATH, EMPLOYEE_EXCEL_TIMESHEETS_FOLDER
+
+    # Create the 'Folders' section if it doesn't exist
+    if 'Folders' not in config:
+        config['Folders'] = {}
+
+    # set global values and gui config variables to whatever is in the window
+    EMPLOYEE_EXCEL_TIMESHEETS_FOLDER = config['Folders']['Employee_Excel_Timesheets_Folder'] = values["Employee_Excel_Timesheets_Folder"]
+    SIGNED_BLANK_PDFS_FOLDER_PATH = config['Folders']['Signed_Employee_Blank_PDFs_Folder'] = values["Signed_Employee_Blank_PDFs_Folder"]
+    OUTPUT_FOLDER_PATH = config['Folders']['Output_Folder'] = values["Output_Folder"]
+
+    with open(GUI_CONFIG_PATH, 'w') as configfile:
+        config.write(configfile)
 
 
 def launch_gui():
@@ -66,7 +86,7 @@ def launch_gui():
                     util.is_valid_path(values["Signed_Employee_Blank_PDFs_Folder"]) and \
                     util.is_valid_path(values["Output_Folder"]):
                 pass
-                # set_paths_and_save_config_settings(values, gui_config)
+                set_paths_and_save_config_settings(values, gui_config)
                 # run_script()
     window.close()
 
@@ -74,10 +94,15 @@ def launch_gui():
 
 
 def main():
-    util.create_program_folders([CONFIG_FOLDER_PATH])
-    util.setup_logging(LOG_FILE_PATH)
+    # util.create_program_folders([CONFIG_FOLDER_PATH])
+    # util.setup_logging(LOG_FILE_PATH)
     try:
         # TODO: LOOK INTO CREATING A DROPDOWN MENU
-        launch_gui()
+        # launch_gui()
+        testing.foo2()
     except Exception as e:
         logging.exception('An error occurred: Please check log file in "Config Files"')
+
+
+if __name__ == '__main__':
+    main()

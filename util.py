@@ -1,6 +1,10 @@
+import configparser
 import logging
 import os
+import subprocess
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
+
 import PySimpleGUI as Gui
 
 
@@ -33,6 +37,41 @@ def setup_logging(log_file):
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
     logger.addHandler(handler)
+
+
+def open_folder_explorer(path):
+    # Check if the path exists
+    if os.path.exists(path):
+        # Open the file explorer window to the specified path
+        subprocess.Popen(f'explorer "{os.path.abspath(path)}"')
+    else:
+        Gui.popup_error("Missing or Invalid Filepath(s)\nPlease check that you've selected all folders")
+
+
+def is_valid_path(filepath: str):
+    if filepath and Path(filepath).exists():
+        return True
+    Gui.popup_error("Missing or Invalid Filepath(s)\nPlease check that you've selected all folders")
+    return False
+
+
+def load_gui_settings(gui_path: str) -> configparser.ConfigParser:
+    # Check if config.ini file exists
+    if not os.path.isfile(gui_path):
+        # Create config.ini file with default settings
+        config = configparser.ConfigParser()
+        config['GUI'] = {
+            'window_title': 'Scandoc Imaging Pdf Merger',
+            'font_size': '14',
+            'font_family': 'Arial',
+            'theme': 'LightBlue3'
+        }
+        with open(gui_path, 'w') as configfile:
+            config.write(configfile)
+    # return config file
+    config: configparser.ConfigParser = configparser.ConfigParser()
+    config.read(gui_path)
+    return config
 
 
 def generate_window_layout(employee_excel_timesheets_folder, signed_blank_pdfs_folder_path, output_folder_path) -> list:
