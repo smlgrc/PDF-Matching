@@ -74,46 +74,94 @@ def load_gui_settings(gui_path: str) -> configparser.ConfigParser:
     return config
 
 
-def generate_window_layout(employee_excel_timesheets_folder, signed_blank_pdfs_folder_path, output_folder_path) -> list:
+def generate_window_layout(si_logo_path, program_title, file_paths) -> list:
+    select_paths = []
+    for text, path in file_paths.items():
+        select_paths.append([
+            Gui.Text(f"{text}:"),
+            Gui.Input(key=f"{text}", default_text=path, size=(60, 0)),
+            Gui.FileBrowse(button_text='Select File') if 'file' in text.lower() else Gui.FolderBrowse(button_text='Select Folder'),
+            Gui.Button(button_text="Open Folder", key=f"{text} folder open")
+        ])
     return [
         [
             Gui.Column([
-            ], element_justification='center', justification='center'),
-        ],
-        [
-            Gui.Column([
                 [
-                    Gui.Text(text='\nTimesheet Automation Program\n', font=('Ariel', 25)),
+                    Gui.Image(source=si_logo_path),
                 ],
             ], element_justification='center', justification='center'),
         ],
         [
             Gui.Column([
                 [
-                    Gui.Text("Employee Excel Timesheets Folder:"),
-                    Gui.Input(key="Employee_Excel_Timesheets_Folder", default_text=employee_excel_timesheets_folder, size=(60, 0)),
-                    Gui.FolderBrowse(button_text="Select Folder"),
-                    Gui.Button(button_text="Open Folder", key="Employee_Excel_Timesheets_Folder folder open")
+                    Gui.Text(text=f'\n{program_title}\n', font=('Ariel', 25)),
                 ],
-                [
-                    Gui.Text("Signed Employee Blank PDFs Folder:"),
-                    Gui.Input(key="Signed_Employee_Blank_PDFs_Folder", default_text=signed_blank_pdfs_folder_path, size=(60, 0)),
-                    Gui.FolderBrowse(button_text="Select Folder"),
-                    Gui.Button(button_text="Open Folder", key="Signed_Employee_Blank_PDFs_Folder folder open")
-                ],
-                [
-                    Gui.Text("Output Folder:"),
-                    Gui.Input(key="Output_Folder", default_text=output_folder_path, size=(60, 0)),
-                    Gui.FolderBrowse(button_text="Select Folder"),
-                    Gui.Button(button_text="Open Folder", key="Output_Folder folder open")
-                ],
-            ], element_justification='right', pad=(0, 40))
+            ], element_justification='center', justification='center'),
+        ],
+        [
+            Gui.Column(select_paths, element_justification='right', pad=(0, 40))
         ],
         [
             Gui.Column([
                 [
-                    Gui.Exit(s=16, button_color="tomato"), Gui.Button("Automate Employee Timesheets")
+                    Gui.Exit(s=16, button_color="tomato"), Gui.Button("Generate PDF Files")
                 ]
             ], justification='center')
         ]
     ]
+
+
+# def generate_window_layout(employee_excel_timesheets_folder, signed_blank_pdfs_folder_path, output_folder_path) -> list:
+#     return [
+#         [
+#             Gui.Column([
+#             ], element_justification='center', justification='center'),
+#         ],
+#         [
+#             Gui.Column([
+#                 [
+#                     Gui.Text(text='\nTimesheet Automation Program\n', font=('Ariel', 25)),
+#                 ],
+#             ], element_justification='center', justification='center'),
+#         ],
+#         [
+#             Gui.Column([
+#                 [
+#                     Gui.Text("Employee Excel Timesheets Folder:"),
+#                     Gui.Input(key="Employee_Excel_Timesheets_Folder", default_text=employee_excel_timesheets_folder, size=(60, 0)),
+#                     Gui.FolderBrowse(button_text="Select Folder"),
+#                     Gui.FileBrowse(button_text="Select Folder PDF File"),
+#                     Gui.Button(button_text="Open Folder", key="Employee_Excel_Timesheets_Folder folder open")
+#                 ],
+#                 [
+#                     Gui.Text("INVOICE FILE:"),
+#                     Gui.Input(key="Employee_Excel_Timesheets_Folder", default_text=employee_excel_timesheets_folder,
+#                               size=(60, 0)),
+#                     Gui.FileBrowse(button_text="Select Folder PDF File"),
+#                     Gui.Button(button_text="Open Folder", key="Employee_Excel_Timesheets_Folder folder open")
+#                 ],
+#                 [
+#                     Gui.Text("Signed Employee Blank PDFs Folder:"),
+#                     Gui.Input(key="Signed_Employee_Blank_PDFs_Folder", default_text=signed_blank_pdfs_folder_path, size=(60, 0)),
+#                     Gui.FolderBrowse(button_text="Select Folder"),
+#                     Gui.Button(button_text="Open Folder", key="Signed_Employee_Blank_PDFs_Folder folder open")
+#                 ],
+#                 [
+#                     Gui.Text("Output Folder:"),
+#                     Gui.Input(key="Output_Folder", default_text=output_folder_path, size=(60, 0)),
+#                     Gui.FolderBrowse(button_text="Select Folder"),
+#                     Gui.Button(button_text="Open Folder", key="Output_Folder folder open")
+#                 ],
+#             ], element_justification='right', pad=(0, 40))
+#         ],
+#         [
+#             Gui.Column([
+#                 [
+#                     Gui.Exit(s=16, button_color="tomato"), Gui.Button("Automate Employee Timesheets")
+#                 ]
+#             ], justification='center')
+#         ]
+#     ]
+
+
+

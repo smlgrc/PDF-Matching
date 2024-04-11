@@ -1,16 +1,31 @@
 import configparser
 import sys
 
+import generate_invoices
 import testing
 import util
 import logging
 import os
 import PySimpleGUI as Gui
 
+
+def resource_path(relative_path: str):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
+
 CONFIG_FOLDER_PATH: str = "Config Files"
 LOG_FILE_PATH: str = os.path.join(CONFIG_FOLDER_PATH, r"Scandoc_Imaging_PDF_Merger_log_file.log")
 GUI_CONFIG_PATH: str = os.path.join(CONFIG_FOLDER_PATH, r"gui_config.ini")
-OUTPUT_FOLDER_PATH: str = ""
+
+PROGRAM_FILES_PATH: str = resource_path("Program Files")
+SI_LOGO_PATH: str = resource_path(os.path.join(PROGRAM_FILES_PATH, r"si_logo_path.png"))
 
 
 def set_paths_and_save_config_settings(values: dict, config: configparser.ConfigParser):
@@ -37,69 +52,71 @@ def set_paths_and_save_config_settings(values: dict, config: configparser.Config
 
 
 def launch_gui():
-    """
-    This function launches gui which prompts user to select where the employee
-    excel timesheets, signed blank pdfs, and output folders are located. The user can then
-    run the program with the chosen folders.
-    :return:
-    """
-    global SIGNED_BLANK_PDFS_FOLDER_PATH, OUTPUT_FOLDER_PATH, EMPLOYEE_EXCEL_TIMESHEETS_FOLDER
-    # load and set gui config settings
-    gui_config: configparser.ConfigParser = util.load_gui_settings(GUI_CONFIG_PATH)
-    window_title: str = gui_config.get('GUI', 'window_title', fallback='')
-    font_family: str = gui_config.get('GUI', 'font_family', fallback='')
-    font_size: int = int(gui_config.get('GUI', 'font_size', fallback=0))
-    theme: str = gui_config.get('GUI', 'theme', fallback='')
-    Gui.set_options(font=(font_family, font_size))
-    Gui.theme(theme)
+    # # Define the layout for the window with dropdown menu and folder browse boxes
+    # layout_source = [
+    #     [Gui.Text("Source folder path:"), Gui.Input(key='-SOURCE_FOLDER_PATH-'), Gui.FolderBrowse(key='-BROWSE_SOURCE-')],
+    #     [Gui.Button('OK')]
+    # ]
+    #
+    # layout_destination = [
+    #     [Gui.Text("Destination folder path:"), Gui.Input(key='-DEST_FOLDER_PATH-'), Gui.FolderBrowse(key='-BROWSE_DEST-')],
+    #     [Gui.Button('OK')]
+    # ]
 
-    # Retrieve the previously selected folders
-    EMPLOYEE_EXCEL_TIMESHEETS_FOLDER = gui_config.get('Folders', 'Employee_Excel_Timesheets_Folder', fallback='')
-    SIGNED_BLANK_PDFS_FOLDER_PATH = gui_config.get('Folders', 'Signed_Employee_Blank_PDFs_Folder', fallback='')
-    OUTPUT_FOLDER_PATH = gui_config.get('Folders', 'Output_Folder', fallback='')
+    # Initial layout with dropdown menu
+    layout = [
+        [Gui.Text("Select a folder type:")],
+        [Gui.DropDown(values=['Invoices', 'Defense', 'Insurance'], key='-FOLDER_TYPE-', enable_events=False)],
+        [Gui.Exit(s=16, button_color="tomato"), Gui.Button('OK')]
+    ]
 
-    layout: list = util.generate_window_layout(EMPLOYEE_EXCEL_TIMESHEETS_FOLDER,
-                                               SIGNED_BLANK_PDFS_FOLDER_PATH, OUTPUT_FOLDER_PATH)
+    # Create the window
+    window = Gui.Window('Folder Browse Example', layout)
 
-    window: Gui.PySimpleGUI.Window = Gui.Window(window_title, layout)
+    # Event loop
     while True:
-        event: str
-        values: dict
+        folder_type: str = ''
         event, values = window.read()
 
-        select_list = []
-        try:
-            select_list = event.split(' ')
-        except AttributeError as e:
-            if str(e) == "'NoneType' object has no attribute 'split'":
-                sys.exit()
-
+        # Handle event when dropdown menu value changes
         if event in (Gui.WINDOW_CLOSED, "Exit"):
             break
-        if 'folder' in select_list and 'open' in select_list:
-            if values[select_list[0]] == '':
-                Gui.popup_error("Please Select a Valid Folder First.")
-            else:
-                util.open_folder_explorer(values[select_list[0]])
-        if event == "Automate Employee Timesheets":
-            if util.is_valid_path(values["Employee_Excel_Timesheets_Folder"]) and \
-                    util.is_valid_path(values["Signed_Employee_Blank_PDFs_Folder"]) and \
-                    util.is_valid_path(values["Output_Folder"]):
-                pass
-                set_paths_and_save_config_settings(values, gui_config)
-                # run_script()
-    window.close()
+        if event == 'OK' and values['-FOLDER_TYPE-'] == '':
+            print(f"\n\ntype(values) = {type(values)}\nvalues = {values}\nevent = {event}")
+            Gui.popup_error("Please Select a Valid Folder First.")
+        else:
+            # if values is None:
+            #     breakpoint()
+            print(f"\n\ntype(values) = {type(values)}\nvalues = {values}\nevent = {event}")
+            # breakpoint()
+            if '-FOLDER_TYPE-' in values.keys():
+                folder_type = values.get('-FOLDER_TYPE-', '')
+                window.close()  # Close the current window
 
-    # WINDOW.close()
+            # Create a new window with updated layout based on the selected folder type
+            if folder_type == 'Invoices':
+                # new_layout = layout_source  # + [[sg.Button('OK')]]
+                generate_invoices.launch_gui()
+            elif folder_type == 'Defense':
+                pass
+                # generate_defense_pdf().launch_gui()
+            elif folder_type == 'Insurance':
+                pass
+                # generate_insurance_pdf().launch_gui()
+
+            # window = Gui.Window('Folder Browse Example', new_layout)
+
+    # Close the window
+    # window.close()
 
 
 def main():
-    # util.create_program_folders([CONFIG_FOLDER_PATH])
-    # util.setup_logging(LOG_FILE_PATH)
+    util.create_program_folders([CONFIG_FOLDER_PATH, PROGRAM_FILES_PATH])
+    util.setup_logging(LOG_FILE_PATH)
     try:
         # TODO: LOOK INTO CREATING A DROPDOWN MENU
-        # launch_gui()
-        testing.foo2()
+        launch_gui()
+        # testing.foo2()
     except Exception as e:
         logging.exception('An error occurred: Please check log file in "Config Files"')
 
