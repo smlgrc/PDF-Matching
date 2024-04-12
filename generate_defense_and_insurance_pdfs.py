@@ -32,6 +32,12 @@ INVOICE_FOLDER_PATH: str = ""
 LETTERS_FILE_PATH: str = ""
 CASES_FILE_PATH: str = ""
 EXCEL_FILE_PATH: str = ""
+INVOICE_FOLDER_LABEL_NAME = "Invoice PDF Folder"
+REF_NUM_EXCEL_LABEL_NAME = "Reference Number Excel File"
+LETTERS_FILE_LABEL_NAME = "Letters PDF File"
+CASES_FILE_LABEL_NAME = "Cases PDF File"
+OUTPUT_FOLDER_LABEL_NAME = "Output Folder"
+
 
 PROGRAM_FILES_PATH: str = resource_path("Program Files")
 SI_LOGO_PATH: str = resource_path(os.path.join(PROGRAM_FILES_PATH, r"si_logo_path.png"))
@@ -52,8 +58,27 @@ MASTER_LIST: list = []
 READ_PAGES_DICT: dict = {}
 
 
-def initialize_master_dict():
+def initialize_master_dict_OLD():
     global MASTER_DICT, MASTER_LIST, EXCEL_FILE_PATH
+
+    for subdir, dirs, files in os.walk(INVOICE_FOLDER_PATH):
+        """
+        subdir = current parent folder name
+        dirs = list of directory names in subdir
+        files = list of file names in subdir
+        """
+        for file in files:
+            file_path = os.path.join(subdir, file)
+            root_and_ext = os.path.splitext(file_path)
+            root = root_and_ext[0]
+            ext = root_and_ext[1]
+
+            fileName_and_ext = os.path.splitext(file)
+            fileName = fileName_and_ext[0]
+            fileName_ext = fileName_and_ext[1].lower()
+            complete_filename = ''.join(fileName_and_ext)
+
+            print(f'    Processing File {fileName}...')
 
     column_name: str = 'Order No'
     df = pandas.read_excel(EXCEL_FILE_PATH)[[column_name]]
@@ -64,6 +89,10 @@ def initialize_master_dict():
     # initialize master_list
     for ref in MASTER_LIST:
         MASTER_DICT[ref] = {}
+
+
+def initialize_master_dict():
+    pass
 
 
 def process_letter_pdf():
@@ -249,13 +278,12 @@ def set_paths_and_save_config_settings(values: dict, config: configparser.Config
     if 'Folders' not in config:
         config['Folders'] = {}
 
-    # breakpoint()
     # set global values and gui config variables to whatever is in the window
-    EXCEL_FILE_PATH = config['Folders']['EXCEL_FILE_PATH'] = values["Excel File"]
-    INVOICE_FOLDER_PATH = config['Folders']['INVOICE_FOLDER_PATH'] = values["Invoice PDF Folder"]
-    LETTERS_FILE_PATH = config['Folders']['LETTERS_FILE_PATH'] = values["Letters PDF File"]
-    CASES_FILE_PATH = config['Folders']['CASES_FILE_PATH'] = values["Cases PDF File"]
-    OUTPUT_FOLDER_PATH = config['Folders']['OUTPUT_FOLDER_PATH'] = values["Output Folder"]
+    INVOICE_FOLDER_PATH = config['Folders']['INVOICE_FOLDER_PATH'] = values[INVOICE_FOLDER_LABEL_NAME]
+    EXCEL_FILE_PATH = config['Folders']['EXCEL_FILE_PATH'] = values[REF_NUM_EXCEL_LABEL_NAME]
+    LETTERS_FILE_PATH = config['Folders']['LETTERS_FILE_PATH'] = values[LETTERS_FILE_LABEL_NAME]
+    CASES_FILE_PATH = config['Folders']['CASES_FILE_PATH'] = values[CASES_FILE_LABEL_NAME]
+    OUTPUT_FOLDER_PATH = config['Folders']['OUTPUT_FOLDER_PATH'] = values[OUTPUT_FOLDER_LABEL_NAME]
 
     with open(GUI_CONFIG_PATH, 'w') as configfile:
         config.write(configfile)
@@ -280,11 +308,11 @@ def launch_gui():
     OUTPUT_FOLDER_PATH = gui_config.get('Folders', 'OUTPUT_FOLDER_PATH', fallback='')
 
     file_paths = {
-        "Excel File": EXCEL_FILE_PATH,
-        "Invoice PDF Folder": INVOICE_FOLDER_PATH,
-        "Letters PDF File": LETTERS_FILE_PATH,
-        "Cases PDF File": CASES_FILE_PATH,
-        "Output Folder": OUTPUT_FOLDER_PATH
+        INVOICE_FILE_LABEL_NAME: INVOICE_FOLDER_PATH,
+        REF_NUM_EXCEL_LABEL_NAME: EXCEL_FILE_PATH,
+        LETTERS_FILE_LABEL_NAME: LETTERS_FILE_PATH,
+        CASES_FILE_LABEL_NAME: CASES_FILE_PATH,
+        OUTPUT_FOLDER_LABEL_NAME: OUTPUT_FOLDER_PATH
     }
     program_title = "Invoice PDF Merger Program"
     layout: list = util.generate_window_layout(SI_LOGO_PATH, program_title, file_paths)
@@ -316,10 +344,10 @@ def launch_gui():
         if event == "Generate PDF Files":
             if util.verify_paths(values):
                 set_paths_and_save_config_settings(values, gui_config)
-                run_script()
+                run_script(window)
 
 
-def run_script():
+def run_script(window):
     start_time = datetime.now()
 
     print('\nLoading Excel File...')
@@ -333,6 +361,13 @@ def run_script():
     print('\nCreating New PDFs...')
     merge_pdfs()
     print('Done!')
+
+    print('\nOpening Output Folder...')
+    util.open_folder_explorer(OUTPUT_FOLDER_PATH)
+    print('Done!')
+
+    print('\nClosing Program...')
+    window.close()
 
     end_time = datetime.now()
     run_time = end_time - start_time

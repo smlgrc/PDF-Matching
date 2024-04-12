@@ -10,6 +10,7 @@ from datetime import datetime
 import PySimpleGUI as Gui
 import inspect
 import util
+from util import FileSystemObject as FSO
 
 
 def resource_path(relative_path: str):
@@ -27,25 +28,16 @@ CONFIG_FOLDER_PATH: str = "Config Files"
 LOG_FILE_PATH: str = os.path.join(CONFIG_FOLDER_PATH, r"Scandoc_Imaging_PDF_Merger_log_file.log")
 MASTER_DICT_FILE_PATH = os.path.join(CONFIG_FOLDER_PATH, r"master_dict_log.txt")
 GUI_CONFIG_PATH: str = os.path.join(CONFIG_FOLDER_PATH, r"gui_config.ini")
-OUTPUT_FOLDER_PATH: str = ""
-INVOICE_FOLDER_PATH: str = ""
-LETTERS_FILE_PATH: str = ""
-CASES_FILE_PATH: str = ""
-EXCEL_FILE_PATH: str = ""
+
+INVOICE: FSO = FSO("Invoice PDF Folder", "", "INVOICE_FOLDER_PATH", "Folder")
+EXCEL: FSO = FSO("Reference Number Excel File", "", "EXCEL_FILE_PATH", "File")
+LETTERS: FSO = FSO("Letters PDF File", "", "LETTERS_FILE_PATH", "File")
+CASES: FSO = FSO("Cases PDF File", "", "CASES_FILE_PATH", "File")
+OUTPUT: FSO = FSO("Output Folder", "", "OUTPUT_FOLDER_PATH", "Folder")
+PROJECT_OBJECTS: list[FSO] = [INVOICE, EXCEL, LETTERS, CASES, OUTPUT]
 
 PROGRAM_FILES_PATH: str = resource_path("Program Files")
 SI_LOGO_PATH: str = resource_path(os.path.join(PROGRAM_FILES_PATH, r"si_logo_path.png"))
-
-
-# with open(os.path.join(r"C:\GitHub-Config-Files\PDF-Matching.json"), 'r', encoding='utf-8') as jsonFile:
-#     dict_of_paths: dict = json.load(jsonFile)
-# base_folder_path: str = os.path.join(rf"{dict_of_paths.get('base_folder', 'No file folder path found')}")
-# invoice_folder_path: str = os.path.join(rf"{dict_of_paths.get('invoice_folder', 'No location folder path found')}")
-# output_folder_path: str = os.path.join(rf"{dict_of_paths.get('output_folder', 'No invoice folder path found')}")
-# log_folder_path: str = os.path.join(rf"{dict_of_paths.get('log_folder', 'No logs folder path found')}")
-# excel_file_path: str = os.path.join(rf"{dict_of_paths.get('excel_file', 'No excel file found')}")
-# letter_file_path: str = os.path.join(rf"{dict_of_paths.get('letter_file', 'No letter file path found')}")
-# case_file_path: str = os.path.join(rf"{dict_of_paths.get('case_file', 'No case file path found')}")
 
 MASTER_DICT: dict = {}
 MASTER_LIST: list = []
@@ -53,10 +45,10 @@ READ_PAGES_DICT: dict = {}
 
 
 def initialize_master_dict():
-    global MASTER_DICT, MASTER_LIST, EXCEL_FILE_PATH
+    global MASTER_DICT, MASTER_LIST
 
     column_name: str = 'Order No'
-    df = pandas.read_excel(EXCEL_FILE_PATH)[[column_name]]
+    df = pandas.read_excel(EXCEL.get_field_path())[[column_name]]
     for i in range(len(df)):
         if not math.isnan(df[column_name].iloc[i]):
             MASTER_LIST.append(str(int(df[column_name].iloc[i])))
@@ -67,9 +59,9 @@ def initialize_master_dict():
 
 
 def process_letter_pdf():
-    global MASTER_DICT, MASTER_LIST, LETTERS_FILE_PATH
+    global MASTER_DICT, MASTER_LIST
     page: int = 0
-    pdfFileObj = open(LETTERS_FILE_PATH, 'rb')
+    pdfFileObj = open(LETTERS.get_field_path(), 'rb')
     try:
         pdfReader: PdfReader = PdfReader(pdfFileObj, strict=False)
         pdfPages: list[PageObject] = pdfReader.pages
@@ -88,7 +80,7 @@ def process_letter_pdf():
 
             if base_ref_num in MASTER_LIST:
                 ref_num_match = {
-                    'file_path': LETTERS_FILE_PATH,
+                    'file_path': LETTERS.get_field_path(),
                     'page_num': page_num
                 }
                 page += 1
@@ -103,7 +95,7 @@ def process_letter_pdf():
 
 def process_case_pdf():
     global MASTER_DICT, MASTER_LIST
-    pdfFileObj = open(CASES_FILE_PATH, 'rb')
+    pdfFileObj = open(CASES.get_field_path(), 'rb')
     try:
         pdfReader: PdfReader = PdfReader(pdfFileObj, strict=False)
         pdfPages: list[PageObject] = pdfReader.pages
@@ -122,7 +114,7 @@ def process_case_pdf():
 
             if base_ref_num in MASTER_LIST:
                 ref_num_match = {
-                    'file_path': CASES_FILE_PATH,
+                    'file_path': CASES.get_field_path(),
                     'page_num': page_num
                 }
                 ref_num_case = f'{base_ref_num}-case'
@@ -134,7 +126,7 @@ def process_case_pdf():
 
 def process_invoice_folder():
     global MASTER_DICT, MASTER_LIST
-    for subdir, dirs, files in os.walk(INVOICE_FOLDER_PATH):
+    for subdir, dirs, files in os.walk(INVOICE.get_field_path()):
         """
         subdir = current parent folder name
         dirs = list of directory names in subdir
@@ -209,7 +201,7 @@ def merge_pdfs():
     global MASTER_DICT
     for base_ref_num, ref_num_matches in MASTER_DICT.items():
         print(f'    Processing {base_ref_num}-Invoices...')
-        pdfOutputPath = os.path.join(OUTPUT_FOLDER_PATH, f'{base_ref_num}-Invoices.pdf')
+        pdfOutputPath = os.path.join(OUTPUT.get_field_path(), f'{base_ref_num}-Invoices.pdf')
         pdfOutputFile = open(pdfOutputPath, 'wb')
         pdfWriter = PyPDF2.PdfWriter()
 
@@ -243,26 +235,24 @@ def set_paths_and_save_config_settings(values: dict, config: configparser.Config
     :param values: file paths of previously user chosen folders
     :param config: config object used to update and save file paths to config ini file
     """
-    global EXCEL_FILE_PATH, INVOICE_FOLDER_PATH, LETTERS_FILE_PATH, CASES_FILE_PATH, OUTPUT_FOLDER_PATH
+    global PROJECT_OBJECTS
 
     # Create the 'Folders' section if it doesn't exist
     if 'Folders' not in config:
         config['Folders'] = {}
 
-    # breakpoint()
     # set global values and gui config variables to whatever is in the window
-    EXCEL_FILE_PATH = config['Folders']['EXCEL_FILE_PATH'] = values["Excel File"]
-    INVOICE_FOLDER_PATH = config['Folders']['INVOICE_FOLDER_PATH'] = values["Invoice PDF Folder"]
-    LETTERS_FILE_PATH = config['Folders']['LETTERS_FILE_PATH'] = values["Letters PDF File"]
-    CASES_FILE_PATH = config['Folders']['CASES_FILE_PATH'] = values["Cases PDF File"]
-    OUTPUT_FOLDER_PATH = config['Folders']['OUTPUT_FOLDER_PATH'] = values["Output Folder"]
+    for object in PROJECT_OBJECTS:
+        file_path: str = values[object.get_field_name()]
+        object.set_field_path(file_path)
+        config['Folders'][object.get_field_path_name()] = file_path
 
     with open(GUI_CONFIG_PATH, 'w') as configfile:
         config.write(configfile)
 
 
 def launch_gui():
-    global EXCEL_FILE_PATH, INVOICE_FOLDER_PATH, LETTERS_FILE_PATH, CASES_FILE_PATH, OUTPUT_FOLDER_PATH
+    global PROJECT_OBJECTS
 
     gui_config: configparser.ConfigParser = util.load_gui_settings(GUI_CONFIG_PATH)
     window_title: str = gui_config.get('GUI', 'window_title', fallback='')
@@ -273,21 +263,11 @@ def launch_gui():
     Gui.theme(theme)
 
     # Retrieve the previously selected folders
-    EXCEL_FILE_PATH = gui_config.get('Folders', 'EXCEL_FILE_PATH', fallback='')
-    INVOICE_FOLDER_PATH = gui_config.get('Folders', 'INVOICE_FOLDER_PATH', fallback='')
-    LETTERS_FILE_PATH = gui_config.get('Folders', 'LETTERS_FILE_PATH', fallback='')
-    CASES_FILE_PATH = gui_config.get('Folders', 'CASES_FILE_PATH', fallback='')
-    OUTPUT_FOLDER_PATH = gui_config.get('Folders', 'OUTPUT_FOLDER_PATH', fallback='')
+    for object in PROJECT_OBJECTS:
+        object.set_field_path(gui_config.get('Folders', object.get_field_path_name(), fallback=''))
 
-    file_paths = {
-        "Excel File": EXCEL_FILE_PATH,
-        "Invoice PDF Folder": INVOICE_FOLDER_PATH,
-        "Letters PDF File": LETTERS_FILE_PATH,
-        "Cases PDF File": CASES_FILE_PATH,
-        "Output Folder": OUTPUT_FOLDER_PATH
-    }
     program_title = "Invoice PDF Merger Program"
-    layout: list = util.generate_window_layout(SI_LOGO_PATH, program_title, file_paths)
+    layout: list = util.generate_window_layout(SI_LOGO_PATH, program_title, PROJECT_OBJECTS)
 
     window: Gui.PySimpleGUI.Window = Gui.Window(window_title, layout)
     while True:
@@ -314,12 +294,14 @@ def launch_gui():
             else:
                 util.open_folder_explorer(folder_path)
         if event == "Generate PDF Files":
-            if util.verify_paths(values):
+            if util.verify_paths(values, PROJECT_OBJECTS):
                 set_paths_and_save_config_settings(values, gui_config)
-                run_script()
+                run_script(window)
+            else:
+                Gui.popup_error("Missing or Invalid Filepath(s)\nPlease check that you've selected all folders")
 
 
-def run_script():
+def run_script(window):
     start_time = datetime.now()
 
     print('\nLoading Excel File...')
@@ -333,6 +315,13 @@ def run_script():
     print('\nCreating New PDFs...')
     merge_pdfs()
     print('Done!')
+
+    print('\nOpening Output Folder...')
+    util.open_folder_explorer(OUTPUT.get_field_path())
+    print('Done!')
+
+    print('\nClosing Program...')
+    window.close()
 
     end_time = datetime.now()
     run_time = end_time - start_time

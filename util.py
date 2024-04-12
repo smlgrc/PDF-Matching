@@ -8,6 +8,40 @@ from pathlib import Path
 import PySimpleGUI as Gui
 
 
+class FileSystemObject:
+    def __init__(self, field_name, field_path, field_path_name, field_type):
+        self.field_name: str = field_name
+        self.field_path: str = field_path
+        self.field_path_name: str = field_path_name
+        self.field_type: str = field_type
+
+    def set_field_name(self, field_name): self.field_name = field_name
+    def set_field_path(self, field_path): self.field_path = field_path
+    def set_field_path_name(self, field_path_name): self.field_path_name = field_path_name
+    def set_field_type(self, field_type): self.field_type = field_type
+
+    def get_field_name(self): return self.field_name
+    def get_field_path(self): return self.field_path
+    def get_field_path_name(self): return self.field_path_name
+    def get_field_type(self): return self.field_type
+
+    def get_gui_field(self):
+        gui_list = [
+            Gui.Text(f"{self.field_name}:"),
+            Gui.Input(key=f"{self.field_name}", default_text=self.field_path, size=(60, 0))
+        ]
+        if self.field_type == 'File':
+            gui_list.append(Gui.FileBrowse(button_text=f'Select {self.field_type}'))
+        else:
+            gui_list.append(Gui.FolderBrowse(button_text=f'Select {self.field_type}'))
+        gui_list.append(Gui.Button(button_text="Open Folder", key=f"{self.field_name} folder open"))
+        return gui_list
+
+    def is_path_valid(self): return verify_path(self.field_path)
+
+    def __str__(self): return self.field_name
+
+
 def clear_folder(folder_path: str):
     for file_name in os.listdir(folder_path):
         file_path = os.path.join(folder_path, file_name)
@@ -48,19 +82,17 @@ def open_folder_explorer(path):
         Gui.popup_error("Missing or Invalid Filepath(s)\nPlease check that you've selected all folders")
 
 
-def is_valid_path(filepath: str):
+def verify_path(filepath: str):
     if filepath and Path(filepath).exists():
         return True
-    Gui.popup_error("Missing or Invalid Filepath(s)\nPlease check that you've selected all folders")
     return False
 
 
-def verify_paths(paths: dict):
-    for path in paths.values():
-        if path and Path(path).exists():
-            return True
-        Gui.popup_error("Missing or Invalid Filepath(s)\nPlease check that you've selected all folders")
-        return False
+def verify_paths(paths: dict, objects: list[FileSystemObject]):
+    for object in objects:
+        if not verify_path(paths.get(object.get_field_name(), '')):
+            return False
+    return True
 
 
 def load_gui_settings(gui_path: str) -> configparser.ConfigParser:
@@ -82,15 +114,10 @@ def load_gui_settings(gui_path: str) -> configparser.ConfigParser:
     return config
 
 
-def generate_window_layout(si_logo_path, program_title, file_paths) -> list:
+def generate_window_layout(si_logo_path, program_title, project_objects: list[FileSystemObject]) -> list:
     select_paths = []
-    for text, path in file_paths.items():
-        select_paths.append([
-            Gui.Text(f"{text}:"),
-            Gui.Input(key=f"{text}", default_text=path, size=(60, 0)),
-            Gui.FileBrowse(button_text='Select File') if 'file' in text.lower() else Gui.FolderBrowse(button_text='Select Folder'),
-            Gui.Button(button_text="Open Folder", key=f"{text} folder open")
-        ])
+    for object in project_objects:
+        select_paths.append(object.get_gui_field())
     return [
         [
             Gui.Column([
@@ -117,59 +144,3 @@ def generate_window_layout(si_logo_path, program_title, file_paths) -> list:
             ], justification='center')
         ]
     ]
-
-
-# def generate_window_layout(employee_excel_timesheets_folder, signed_blank_pdfs_folder_path, output_folder_path) -> list:
-#     return [
-#         [
-#             Gui.Column([
-#             ], element_justification='center', justification='center'),
-#         ],
-#         [
-#             Gui.Column([
-#                 [
-#                     Gui.Text(text='\nTimesheet Automation Program\n', font=('Ariel', 25)),
-#                 ],
-#             ], element_justification='center', justification='center'),
-#         ],
-#         [
-#             Gui.Column([
-#                 [
-#                     Gui.Text("Employee Excel Timesheets Folder:"),
-#                     Gui.Input(key="Employee_Excel_Timesheets_Folder", default_text=employee_excel_timesheets_folder, size=(60, 0)),
-#                     Gui.FolderBrowse(button_text="Select Folder"),
-#                     Gui.FileBrowse(button_text="Select Folder PDF File"),
-#                     Gui.Button(button_text="Open Folder", key="Employee_Excel_Timesheets_Folder folder open")
-#                 ],
-#                 [
-#                     Gui.Text("INVOICE FILE:"),
-#                     Gui.Input(key="Employee_Excel_Timesheets_Folder", default_text=employee_excel_timesheets_folder,
-#                               size=(60, 0)),
-#                     Gui.FileBrowse(button_text="Select Folder PDF File"),
-#                     Gui.Button(button_text="Open Folder", key="Employee_Excel_Timesheets_Folder folder open")
-#                 ],
-#                 [
-#                     Gui.Text("Signed Employee Blank PDFs Folder:"),
-#                     Gui.Input(key="Signed_Employee_Blank_PDFs_Folder", default_text=signed_blank_pdfs_folder_path, size=(60, 0)),
-#                     Gui.FolderBrowse(button_text="Select Folder"),
-#                     Gui.Button(button_text="Open Folder", key="Signed_Employee_Blank_PDFs_Folder folder open")
-#                 ],
-#                 [
-#                     Gui.Text("Output Folder:"),
-#                     Gui.Input(key="Output_Folder", default_text=output_folder_path, size=(60, 0)),
-#                     Gui.FolderBrowse(button_text="Select Folder"),
-#                     Gui.Button(button_text="Open Folder", key="Output_Folder folder open")
-#                 ],
-#             ], element_justification='right', pad=(0, 40))
-#         ],
-#         [
-#             Gui.Column([
-#                 [
-#                     Gui.Exit(s=16, button_color="tomato"), Gui.Button("Automate Employee Timesheets")
-#                 ]
-#             ], justification='center')
-#         ]
-#     ]
-
-
-
