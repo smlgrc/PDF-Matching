@@ -55,6 +55,14 @@ def is_valid_path(filepath: str):
     return False
 
 
+def verify_paths(paths: dict):
+    for path in paths.values():
+        if path and Path(path).exists():
+            return True
+        Gui.popup_error("Missing or Invalid Filepath(s)\nPlease check that you've selected all folders")
+        return False
+
+
 def load_gui_settings(gui_path: str) -> configparser.ConfigParser:
     # Check if config.ini file exists
     if not os.path.isfile(gui_path):

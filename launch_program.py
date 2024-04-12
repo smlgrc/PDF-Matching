@@ -1,6 +1,8 @@
 import configparser
 import sys
 
+import generate_defense_pdf
+import generate_insurance_pdf
 import generate_invoices
 import testing
 import util
@@ -98,11 +100,9 @@ def launch_gui():
                 # new_layout = layout_source  # + [[sg.Button('OK')]]
                 generate_invoices.launch_gui()
             elif folder_type == 'Defense':
-                pass
-                # generate_defense_pdf().launch_gui()
+                generate_defense_pdf.launch_gui()
             elif folder_type == 'Insurance':
-                pass
-                # generate_insurance_pdf().launch_gui()
+                generate_insurance_pdf.launch_gui()
 
             # window = Gui.Window('Folder Browse Example', new_layout)
 
