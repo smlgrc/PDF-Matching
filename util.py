@@ -8,22 +8,48 @@ from pathlib import Path
 import PySimpleGUI as Gui
 
 
+class ReferenceNumber:
+    def __init__(self, base_reference_number, document_type, location_number, file_path, page_numbers):
+        self.base_reference_number: str = base_reference_number
+        self.document_type: str = document_type
+        self.location_number: str = location_number
+        self.file_path: str = file_path
+        self.page_numbers: list[int] = page_numbers
+
+    def set_base_reference_number(self, base_reference_number): self.base_reference_number = base_reference_number
+    def set_document_type(self, document_type): self.document_type = document_type
+    def set_location_number(self, location_number): self.location_number = location_number
+    def set_file_path(self, file_path): self.file_path = file_path
+    def set_page_numbers(self, page_numbers): self.page_numbers = page_numbers
+
+    def get_base_reference_number(self): return self.base_reference_number
+    def get_document_type(self): return self.document_type
+    def get_location_number(self): return self.location_number
+    def get_file_path(self): return self.file_path
+    def get_page_numbers(self): return self.page_numbers
+
+    def __str__(self): return f"{self.base_reference_number}-{self.location_number} {self.document_type}"
+
+
 class FileSystemObject:
-    def __init__(self, field_name, field_path, field_path_name, field_type):
+    def __init__(self, field_name, field_path, field_path_name, field_type, job):
         self.field_name: str = field_name
         self.field_path: str = field_path
         self.field_path_name: str = field_path_name
         self.field_type: str = field_type
+        self.job: dict = job
 
     def set_field_name(self, field_name): self.field_name = field_name
     def set_field_path(self, field_path): self.field_path = field_path
     def set_field_path_name(self, field_path_name): self.field_path_name = field_path_name
     def set_field_type(self, field_type): self.field_type = field_type
+    def set_job(self, job): self.job = job
 
     def get_field_name(self): return self.field_name
     def get_field_path(self): return self.field_path
     def get_field_path_name(self): return self.field_path_name
     def get_field_type(self): return self.field_type
+    def get_job(self): return self.job
 
     def get_gui_field(self):
         gui_list = [

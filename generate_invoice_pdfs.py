@@ -29,11 +29,11 @@ LOG_FILE_PATH: str = os.path.join(CONFIG_FOLDER_PATH, r"Scandoc_Imaging_PDF_Merg
 MASTER_DICT_FILE_PATH = os.path.join(CONFIG_FOLDER_PATH, r"master_dict_log.txt")
 GUI_CONFIG_PATH: str = os.path.join(CONFIG_FOLDER_PATH, r"gui_config.ini")
 
-INVOICE: FSO = FSO("Invoice PDF Folder", "", "INVOICE_FOLDER_PATH", "Folder")
-EXCEL: FSO = FSO("Reference Number Excel File", "", "EXCEL_FILE_PATH", "File")
-LETTERS: FSO = FSO("Letters PDF File", "", "LETTERS_FILE_PATH", "File")
-CASES: FSO = FSO("Cases PDF File", "", "CASES_FILE_PATH", "File")
-OUTPUT: FSO = FSO("Output Folder", "", "OUTPUT_FOLDER_PATH", "Folder")
+INVOICE: FSO = FSO("Invoice PDF Folder", "", "INVOICE_FOLDER_PATH", "Folder", {"name": "Invoice", "abbreviation": "Inv"})
+EXCEL: FSO = FSO("Reference Number Excel File", "", "EXCEL_FILE_PATH", "File", None)
+LETTERS: FSO = FSO("Letters PDF File", "", "LETTERS_FILE_PATH", "File", None)
+CASES: FSO = FSO("Cases PDF File", "", "CASES_FILE_PATH", "File", None)
+OUTPUT: FSO = FSO("Output Folder", "", "OUTPUT_FOLDER_PATH", "Folder", None)
 PROJECT_OBJECTS: list[FSO] = [INVOICE, EXCEL, LETTERS, CASES, OUTPUT]
 
 PROGRAM_FILES_PATH: str = resource_path("Program Files")
