@@ -27,6 +27,7 @@ GUI_CONFIG_PATH: str = os.path.join(CONFIG_FOLDER_PATH, r"gui_config.ini")
 
 PROGRAM_FILES_PATH: str = resource_path("Program Files")
 SI_LOGO_PATH: str = resource_path(os.path.join(PROGRAM_FILES_PATH, r"si_logo_path.png"))
+PROGRAM_LIST = ['Invoices', 'Defense & Insurance']
 
 
 def set_paths_and_save_config_settings(values: dict, config: configparser.ConfigParser):
@@ -55,14 +56,17 @@ def set_paths_and_save_config_settings(values: dict, config: configparser.Config
 def launch_gui():
     try:
         # Initial layout with dropdown menu
-        layout = [
-            [Gui.Text("Select a folder type:")],
-            [Gui.DropDown(values=['Invoices', 'Defense & Insurance'], key='-FOLDER_TYPE-', enable_events=False)],
-            [Gui.Exit(s=16, button_color="tomato"), Gui.Button('OK')]
-        ]
+        gui_config: configparser.ConfigParser = util.load_gui_settings(GUI_CONFIG_PATH)
+        window_title: str = gui_config.get('GUI', 'window_title', fallback='')
+        font_family: str = gui_config.get('GUI', 'font_family', fallback='')
+        font_size: int = int(gui_config.get('GUI', 'font_size', fallback=0))
+        theme: str = gui_config.get('GUI', 'theme', fallback='')
+        Gui.set_options(font=(font_family, font_size))
+        Gui.theme(theme)
 
         # Create the window
-        window = Gui.Window('Folder Browse Example', layout)
+        layout = util.generate_dropdown_layout(SI_LOGO_PATH, PROGRAM_LIST)
+        window = Gui.Window(window_title, layout)
 
         # Event loop
         while True:
@@ -72,13 +76,13 @@ def launch_gui():
             # Handle event when dropdown menu value changes
             if event in (Gui.WINDOW_CLOSED, "Exit"):
                 break
-            if event == 'OK' and values['-FOLDER_TYPE-'] == '':
+            if event == 'Run' and values['-PROGRAM-'] == '':
                 # print(f"\n\ntype(values) = {type(values)}\nvalues = {values}\nevent = {event}")
-                Gui.popup_error("Please Select a Valid Folder First.")
+                Gui.popup_error("Please select a program first.", title="Warning")
             else:
                 # print(f"\n\ntype(values) = {type(values)}\nvalues = {values}\nevent = {event}")
-                if '-FOLDER_TYPE-' in values.keys():
-                    folder_type = values.get('-FOLDER_TYPE-', '')
+                if '-PROGRAM-' in values.keys():
+                    folder_type = values.get('-PROGRAM-', '')
                     window.close()  # Close the current window
 
                 # Create a new window with updated layout based on the selected folder type

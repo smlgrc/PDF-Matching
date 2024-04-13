@@ -102,9 +102,9 @@ def load_gui_settings(gui_path: str) -> configparser.ConfigParser:
         config = configparser.ConfigParser()
         config['GUI'] = {
             'window_title': 'Scandoc Imaging Pdf Merger',
-            'font_size': '14',
+            'font_size': '16',
             'font_family': 'Arial',
-            'theme': 'LightBlue3'
+            'theme': 'SystemDefault'
         }
         with open(gui_path, 'w') as configfile:
             config.write(configfile)
@@ -142,5 +142,39 @@ def generate_window_layout(si_logo_path, program_title, project_objects: list[Fi
                     Gui.Exit(s=16, button_color="tomato"), Gui.Button("Generate PDF Files")
                 ]
             ], justification='center')
+        ]
+    ]
+
+
+def generate_dropdown_layout(si_logo_path, program_list):
+    return [
+        [
+            [
+                Gui.Column([
+                    [
+                        Gui.Image(source=si_logo_path),
+                    ],
+                ], element_justification='center', justification='center'),
+            ],
+            Gui.Column([
+                [
+                    Gui.Text("\nSelect a program to run:")
+                ],
+            ], element_justification='center', justification='center'),
+        ],
+        [
+            Gui.Column([
+                [
+                    Gui.DropDown(values=program_list, key='-PROGRAM-', enable_events=False,
+                                 pad=(0, 30)),
+                ],
+            ], element_justification='center', justification='center'),
+        ],
+        [
+            Gui.Column([
+                [
+                    Gui.Exit(s=16, button_color="tomato"), Gui.Button(s=16, button_text='Run')
+                ],
+            ], element_justification='center', justification='center'),
         ]
     ]

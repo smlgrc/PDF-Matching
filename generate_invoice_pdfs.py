@@ -255,10 +255,10 @@ def launch_gui():
     global PROJECT_OBJECTS
 
     gui_config: configparser.ConfigParser = util.load_gui_settings(GUI_CONFIG_PATH)
-    window_title: str = gui_config.get('GUI', 'window_title', fallback='')
+    window_title: str = 'Invoice PDF Merger'
     font_family: str = gui_config.get('GUI', 'font_family', fallback='')
     font_size: int = int(gui_config.get('GUI', 'font_size', fallback=0))
-    theme: str = gui_config.get('GUI', 'theme', fallback='')
+    theme: str = gui_config.get('GUI', 'theme', fallback='SystemDefault')
     Gui.set_options(font=(font_family, font_size))
     Gui.theme(theme)
 
@@ -266,7 +266,7 @@ def launch_gui():
     for object in PROJECT_OBJECTS:
         object.set_field_path(gui_config.get('Folders', object.get_field_path_name(), fallback=''))
 
-    program_title = "Invoice PDF Merger Program"
+    program_title = "Invoice PDF Merger"
     layout: list = util.generate_window_layout(SI_LOGO_PATH, program_title, PROJECT_OBJECTS)
 
     window: Gui.PySimpleGUI.Window = Gui.Window(window_title, layout)
