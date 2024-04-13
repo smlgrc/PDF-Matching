@@ -32,24 +32,27 @@ class ReferenceNumber:
 
 
 class FileSystemObject:
-    def __init__(self, field_name, field_path, field_path_name, field_type, job):
+    def __init__(self, field_name, field_path, field_path_name, field_type, job_attributes, master_dict):
         self.field_name: str = field_name
         self.field_path: str = field_path
         self.field_path_name: str = field_path_name
         self.field_type: str = field_type
-        self.job: dict = job
+        self.job_attributes: dict = job_attributes
+        self.master_dict: dict = master_dict
 
     def set_field_name(self, field_name): self.field_name = field_name
     def set_field_path(self, field_path): self.field_path = field_path
     def set_field_path_name(self, field_path_name): self.field_path_name = field_path_name
     def set_field_type(self, field_type): self.field_type = field_type
-    def set_job(self, job): self.job = job
+    def set_job_attributes(self, job_attributes): self.job_attributes = job_attributes
+    def set_master_dict(self, master_dict): self.master_dict = master_dict
 
     def get_field_name(self): return self.field_name
     def get_field_path(self): return self.field_path
     def get_field_path_name(self): return self.field_path_name
     def get_field_type(self): return self.field_type
-    def get_job(self): return self.job
+    def get_job_attributes(self): return self.job_attributes
+    def get_master_dict(self): return self.master_dict
 
     def get_gui_field(self):
         gui_list = [
