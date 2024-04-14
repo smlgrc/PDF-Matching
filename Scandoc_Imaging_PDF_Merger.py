@@ -28,6 +28,7 @@ GUI_CONFIG_PATH: str = os.path.join(CONFIG_FOLDER_PATH, r"gui_config.ini")
 PROGRAM_FILES_PATH: str = resource_path("Program Files")
 SI_LOGO_PATH: str = resource_path(os.path.join(PROGRAM_FILES_PATH, r"si_logo_path.png"))
 PROGRAM_LIST = ['Invoices', 'Defense & Insurance']
+# GUI_CONFIG_PATHS: list[str] = [os.path.join(CONFIG_FOLDER_PATH, rf"{program}_gui_config.ini") for program in PROGRAM_LIST]
 
 
 def set_paths_and_save_config_settings(values: dict, config: configparser.ConfigParser):

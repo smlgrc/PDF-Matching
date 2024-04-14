@@ -24,17 +24,18 @@ def resource_path(relative_path: str):
     return os.path.join(base_path, relative_path)
 
 
+PROGRAM_NAME: str = "Invoice Program"
 CONFIG_FOLDER_PATH: str = "Config Files"
 LOG_FILE_PATH: str = os.path.join(CONFIG_FOLDER_PATH, r"Scandoc_Imaging_PDF_Merger_log_file.log")
 MASTER_DICT_FILE_PATH = os.path.join(CONFIG_FOLDER_PATH, r"master_dict_log.txt")
 GUI_CONFIG_PATH: str = os.path.join(CONFIG_FOLDER_PATH, r"gui_config.ini")
 
-INVOICE: FSO = FSO("Invoice PDF Folder", "", "INVOICE_FOLDER_PATH", "Folder", {"name": "Invoice", "abbreviation": "Inv"}, None)
-EXCEL: FSO = FSO("Reference Number Excel File", "", "EXCEL_FILE_PATH", "File", None, None)
-LETTERS: FSO = FSO("Letters PDF File", "", "LETTERS_FILE_PATH", "File", None, None)
-CASES: FSO = FSO("Cases PDF File", "", "CASES_FILE_PATH", "File", None, None)
-OUTPUT: FSO = FSO("Output Folder", "", "OUTPUT_FOLDER_PATH", "Folder", None, None)
-PROJECT_OBJECTS: list[FSO] = [INVOICE, EXCEL, LETTERS, CASES, OUTPUT]
+INVOICE: FSO = FSO("Invoice PDF Folder", "", "INVOICE_FOLDER_PATH", "Folder", {"name": "Invoice", "abbreviation": "Inv"}, None, '')
+EXCEL: FSO = FSO("Reference Number Excel File", "", "EXCEL_FILE_PATH", "File", None, None, None)
+LETTERS: FSO = FSO("Letters PDF File", "", "LETTERS_FILE_PATH", "File", None, None, None)
+CASES: FSO = FSO("Cases PDF File", "", "CASES_FILE_PATH", "File", None, None, None)
+OUTPUT: FSO = FSO("Output Folder", "", "OUTPUT_FOLDER_PATH", "Folder", None, None, None)
+PROJECT_OBJECTS: list[FSO] = [EXCEL, LETTERS, CASES, INVOICE, OUTPUT]
 
 PROGRAM_FILES_PATH: str = resource_path("Program Files")
 SI_LOGO_PATH: str = resource_path(os.path.join(PROGRAM_FILES_PATH, r"si_logo_path.png"))
@@ -199,9 +200,14 @@ def search_and_save_locations():
 
 def merge_pdfs():
     global MASTER_DICT
+
+    job_output_path = os.path.join(OUTPUT.get_field_path(),
+                                   f'{INVOICE.get_job_attributes()["name"]} Output Files - {datetime.now().strftime("%Y%m%d_%H%M%S")}')
+    util.create_program_folders([job_output_path])
+
     for base_ref_num, ref_num_matches in MASTER_DICT.items():
         print(f'    Processing {base_ref_num}-Invoices...')
-        pdfOutputPath = os.path.join(OUTPUT.get_field_path(), f'{base_ref_num}-Invoices.pdf')
+        pdfOutputPath = os.path.join(job_output_path, f'{base_ref_num}-Invoices.pdf')
         pdfOutputFile = open(pdfOutputPath, 'wb')
         pdfWriter = PyPDF2.PdfWriter()
 
@@ -238,14 +244,14 @@ def set_paths_and_save_config_settings(values: dict, config: configparser.Config
     global PROJECT_OBJECTS
 
     # Create the 'Folders' section if it doesn't exist
-    if 'Folders' not in config:
-        config['Folders'] = {}
+    if f'{PROGRAM_NAME} Folders' not in config:
+        config[f'{PROGRAM_NAME} Folders'] = {}
 
     # set global values and gui config variables to whatever is in the window
     for object in PROJECT_OBJECTS:
         file_path: str = values[object.get_field_name()]
         object.set_field_path(file_path)
-        config['Folders'][object.get_field_path_name()] = file_path
+        config[f'{PROGRAM_NAME} Folders'][object.get_field_path_name()] = file_path
 
     with open(GUI_CONFIG_PATH, 'w') as configfile:
         config.write(configfile)
@@ -264,7 +270,7 @@ def launch_gui():
 
     # Retrieve the previously selected folders
     for object in PROJECT_OBJECTS:
-        object.set_field_path(gui_config.get('Folders', object.get_field_path_name(), fallback=''))
+        object.set_field_path(gui_config.get(f'{PROGRAM_NAME} Folders', object.get_field_path_name(), fallback=''))
 
     program_title = "Invoice PDF Merger"
     layout: list = util.generate_window_layout(SI_LOGO_PATH, program_title, PROJECT_OBJECTS)

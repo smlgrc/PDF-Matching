@@ -25,21 +25,25 @@ def resource_path(relative_path: str):
     return os.path.join(base_path, relative_path)
 
 
+PROGRAM_NAME: str = "Defense and Insurance Program"
 CONFIG_FOLDER_PATH: str = "Config Files"
 LOG_FILE_PATH: str = os.path.join(CONFIG_FOLDER_PATH, r"Scandoc_Imaging_PDF_Merger_log_file.log")
-MASTER_DICT_FILE_PATH = os.path.join(CONFIG_FOLDER_PATH, r"master_dict_log.txt")
+# MASTER_DICT_FILE_PATH = os.path.join(CONFIG_FOLDER_PATH, r"master_dict_log.txt")
+DEFENSE_DICT_FILE_PATH = os.path.join(CONFIG_FOLDER_PATH, r"defense_master_dict_log.txt")
+INSURANCE_DICT_FILE_PATH = os.path.join(CONFIG_FOLDER_PATH, r"insurance_master_dict_log.txt")
 GUI_CONFIG_PATH: str = os.path.join(CONFIG_FOLDER_PATH, r"gui_config.ini")
 
-DEFENSE: FSO = FSO("Defense PDF File", "", "DEFENSE_FILE_PATH", "File", {"name": "Defense", "abbreviation": "Def Notice"}, {})
-INSURANCE: FSO = FSO("Insurance PDF File", "", "INSURANCE_FILE_PATH", "File", {"name": "Insurance", "abbreviation": "Ins Notice"}, {})
-EXCEL: FSO = FSO("Reference Number Excel File", "", "EXCEL_FILE_PATH", "File", None, None)
-SUBPOENA: FSO = FSO("Subpoena PDF Folder", "", "SUBPOENA_FOLDER_PATH", "Folder", None, None)
-OUTPUT: FSO = FSO("Output Folder", "", "OUTPUT_FOLDER_PATH", "Folder", None, None)
+DEFENSE: FSO = FSO("Defense PDF File", "", "DEFENSE_FILE_PATH", "File", {"name": "Defense", "abbreviation": "Def Notice", "job_master_dict_file_path": DEFENSE_DICT_FILE_PATH}, {}, '')
+INSURANCE: FSO = FSO("Insurance PDF File", "", "INSURANCE_FILE_PATH", "File", {"name": "Insurance", "abbreviation": "Ins Notice", "job_master_dict_file_path": INSURANCE_DICT_FILE_PATH}, {}, '')
+EXCEL: FSO = FSO("Reference Number Excel File", "", "EXCEL_FILE_PATH", "File", None, None, None)
+SUBPOENA: FSO = FSO("Subpoena PDF Folder", "", "SUBPOENA_FOLDER_PATH", "Folder", None, None, None)
+OUTPUT: FSO = FSO("Output Folder", "", "OUTPUT_FOLDER_PATH", "Folder", None, None, None)
 
 MASTER_DEFENSE_DICT: dict = {}
 MASTER_INSURANCE_DICT: dict = {}
 PROJECT_OBJECTS: list[FSO] = [DEFENSE, INSURANCE, EXCEL, SUBPOENA, OUTPUT]
 JOB_LIST: list[FSO] = [DEFENSE, INSURANCE]
+
 
 PROGRAM_FILES_PATH: str = resource_path("Program Files")
 SI_LOGO_PATH: str = resource_path(os.path.join(PROGRAM_FILES_PATH, r"si_logo_path.png"))
@@ -100,22 +104,13 @@ def process_sdt_pdfs():
                     'page_num': i
                 }
                 for job in JOB_LIST:
-                    job.get_master_dict()[base_ref][f'{base_ref}-{fileName} page {i + 1}'] = ref_num_match
-            print()
-            print(base_ref)
-            print(subdir, file)
-            print()
-            print(DEFENSE.get_master_dict())
-            print()
-            print(INSURANCE.get_master_dict())
-            print()
-            breakpoint()
+                    if base_ref in fileName:
+                        full_ref_number = f'{fileName} page {i + 1}'
+                    else:
+                        full_ref_number = f'{base_ref}-{fileName} page {i + 1}'
+                    job.get_master_dict()[base_ref][full_ref_number] = ref_num_match
 
             print(f'    Processing File {fileName}...')
-
-            # example
-            # file_path = 'C:\\Users\\samga\\Documents\\Work\\Scandoc-Imaging\\DEMO\\KAMI_FILES\\location_folder\\L1'
-            # file_name_tuple = os.path.splitext(os.path.basename(file_path)) # ('L1', '.pdf')
 
 
 def process_job_pdfs(job: FSO):
@@ -132,9 +127,6 @@ def process_job_pdfs(job: FSO):
             page_num = pdfReader.get_page_number(pageObj)
 
             pageTxt: str = pageObj.extract_text().lower()
-
-            # if page_num == 1:
-            #     breakpoint()
 
             if pageTxt == '' or pageTxt.isspace():
                 continue
@@ -154,7 +146,6 @@ def process_job_pdfs(job: FSO):
                 ref_num_job = f'{current_base_ref_num}_{job.get_job_attributes()["abbreviation"].replace(" ", "_")}_{str(page)}'
 
                 job.get_master_dict()[current_base_ref_num][ref_num_job] = ref_num_match
-                # MASTER_DICT[current_base_ref_num][ref_num_job] = ref_num_match
                 if page == 2:
                     page = 0
 
@@ -162,124 +153,31 @@ def process_job_pdfs(job: FSO):
         print(f'{e} <- here')
     pdfFileObj.close()
 
-    print()
-    for k, v in MASTER_DICT.items(): print(k, v)
-
-
-# def process_case_pdf():
-#     global MASTER_DICT, MASTER_LIST
-#     pdfFileObj = open(CASES.get_field_path(), 'rb')
-#     try:
-#         pdfReader: PdfReader = PdfReader(pdfFileObj, strict=False)
-#         pdfPages: list[PageObject] = pdfReader.pages
-#         for i in range(len(pdfPages)):
-#             pageObj: PyPDF2._page.PageObject = pdfReader.pages[i]
-#             pageTxt: str = pageObj.extract_text().lower()
-#
-#             if pageTxt == '' or pageTxt.isspace():
-#                 continue
-#
-#             split_word = 'Ref#: '.lower()
-#             base_ref_num = pageTxt.partition(split_word)[2].partition(" ")[0].strip()
-#             page_num = pdfReader.get_page_number(pageObj)
-#
-#             # breakpoint()
-#
-#             if base_ref_num in MASTER_LIST:
-#                 ref_num_match = {
-#                     'file_path': CASES.get_field_path(),
-#                     'page_num': page_num
-#                 }
-#                 ref_num_case = f'{base_ref_num}-case'
-#                 MASTER_DICT[base_ref_num][ref_num_case] = ref_num_match
-#     except Exception as e:
-#         print(f'{e} <- here')
-#     pdfFileObj.close()
-
-
-# def process_invoice_folder():
-#     global MASTER_DICT, MASTER_LIST
-#     for subdir, dirs, files in os.walk(INVOICE.get_field_path()):
-#         """
-#         subdir = current parent folder name
-#         dirs = list of directory names in subdir
-#         files = list of file names in subdir
-#         """
-#         for file in files:
-#             file_path = os.path.join(subdir, file)
-#             root_and_ext = os.path.splitext(file_path)
-#             root = root_and_ext[0]
-#             ext = root_and_ext[1]
-#
-#             fileName_and_ext = os.path.splitext(file)
-#             fileName = fileName_and_ext[0]
-#             fileName_ext = fileName_and_ext[1].lower()
-#             complete_filename = ''.join(fileName_and_ext)
-#
-#             print(f'    Processing File {fileName}...')
-#
-#             # example
-#             # file_path = 'C:\\Users\\samga\\Documents\\Work\\Scandoc-Imaging\\DEMO\\KAMI_FILES\\location_folder\\L1'
-#             # file_name_tuple = os.path.splitext(os.path.basename(file_path)) # ('L1', '.pdf')
-#
-#             # print(file_path)
-#
-#             pdfFileObj = open(file_path, 'rb')
-#             try:
-#                 pdfReader: PdfReader = PdfReader(pdfFileObj, strict=False)
-#                 pdfPages: list[PageObject] = pdfReader.pages
-#
-#                 for i in range(len(pdfPages)):
-#                     pageObj: PyPDF2._page.PageObject = pdfReader.pages[i]
-#                     page_num = pdfReader.get_page_number(pageObj)
-#                     pageTxt: str = pageObj.extract_text().lower()
-#
-#                     if pageTxt == '' or pageTxt.isspace():
-#                         continue
-#
-#                     pageTxt = pageTxt.replace(' ', '')
-#
-#                     split_word = 'invoicenumber:'.lower()
-#                     ref_num_extract = pageTxt.partition(split_word)[2].partition("invoicedate:")[0]
-#                     base_num_extract = ref_num_extract.partition('-')[0]
-#
-#                     # breakpoint()
-#
-#                     if base_num_extract in MASTER_LIST:
-#                         ref_num_match = {
-#                             'file_path': file_path,
-#                             'page_num': page_num
-#                         }
-#
-#                         MASTER_DICT[base_num_extract][ref_num_extract] = ref_num_match
-#
-#             except Exception as e:  # PyPDF2.errors.PdfReadError:
-#                 print(f'{e} <- here')
-#             pdfFileObj.close()
-
 
 def save_json_log():
-    with open(MASTER_DICT_FILE_PATH, 'w') as master_dict_log:
-        master_dict_log.write(json.dumps(MASTER_DICT, indent=4))
+    for job in JOB_LIST:
+        with open(job.get_job_attributes()['job_master_dict_file_path'], 'w') as master_dict_log:
+            master_dict_log.write(json.dumps(job.get_master_dict(), indent=4))
 
 
-def merge_pdfs():
+def merge_pdfs(job: FSO):
     global MASTER_DICT
-    for base_ref_num, ref_num_matches in MASTER_DICT.items():
+
+    job_output_path = os.path.join(job.get_output_path(),
+                                   f'{job.get_job_attributes()["name"]} Output Files - {datetime.now().strftime("%Y%m%d_%H%M%S")}')
+    util.create_program_folders([job_output_path])
+
+    # for base_ref_num, ref_num_matches in MASTER_DICT.items():
+    for base_ref_num, ref_num_matches in job.get_master_dict().items():
         print(f'    Processing {base_ref_num}-Invoices...')
-        pdfOutputPath = os.path.join(OUTPUT.get_field_path(), f'{base_ref_num}-Invoices.pdf')
+        pdfOutputPath = os.path.join(job_output_path, f'{base_ref_num}-{job.get_job_attributes()["abbreviation"]}.pdf')
         pdfOutputFile = open(pdfOutputPath, 'wb')
         pdfWriter = PyPDF2.PdfWriter()
-
-        # ref_num_keys = list(ref_num_matches.keys())
-        # ref_num_keys.sort()
-        # ref_num_keys = sort_ref_num_list(ref_num_keys)
-        # sorted_ref_num_matches = {key: ref_num_matches[i] for key in ref_num_keys}
         for ref_num_match, ref_num_attributes in ref_num_matches.items():
             # file_path = os.path.join(ref_num_attributes['file_path'])
             file_path = os.path.join(ref_num_attributes.get('file_path', 'No path found'))
-            page_num: str = ref_num_attributes['page_num']
 
+            page_num: str = ref_num_attributes['page_num']
             pdfFileObj = open(file_path, 'rb')
             try:
                 pdfReader: PdfReader = PdfReader(pdfFileObj, strict=False)
@@ -304,14 +202,14 @@ def set_paths_and_save_config_settings(values: dict, config: configparser.Config
     global PROJECT_OBJECTS
 
     # Create the 'Folders' section if it doesn't exist
-    if 'Folders' not in config:
-        config['Folders'] = {}
+    if f'{PROGRAM_NAME} Folders' not in config:
+        config[f'{PROGRAM_NAME} Folders'] = {}
 
     # set global values and gui config variables to whatever is in the window
     for object in PROJECT_OBJECTS:
         file_path: str = values[object.get_field_name()]
         object.set_field_path(file_path)
-        config['Folders'][object.get_field_path_name()] = file_path
+        config[f'{PROGRAM_NAME} Folders'][object.get_field_path_name()] = file_path
 
     with open(GUI_CONFIG_PATH, 'w') as configfile:
         config.write(configfile)
@@ -330,7 +228,7 @@ def launch_gui():
 
     # Retrieve the previously selected folders
     for object in PROJECT_OBJECTS:
-        object.set_field_path(gui_config.get('Folders', object.get_field_path_name(), fallback=''))
+        object.set_field_path(gui_config.get(f'{PROGRAM_NAME} Folders', object.get_field_path_name(), fallback=''))
 
     program_title = "Defense and Insurance PDF Merger"
     layout: list = util.generate_window_layout(SI_LOGO_PATH, program_title, PROJECT_OBJECTS)
@@ -370,37 +268,8 @@ def launch_gui():
 def search_and_save_locations():
     for job in JOB_LIST:
         process_job_pdfs(job)
-
-    # TODO: PROCESS SUBPOENAS INSTEAD OF RUNNING JOB TWICE, JUST ADD THE REST OF THE FILES TO EACH DICT
-    # 260767
-    # {'260767_Ins_Notice_1': {
-    #     'file_path': 'C:/Users/Sam/Documents/Personal/Work/Scandoc Imaging/Defense and Insurance Folder/Ins Notice.pdf',
-    #     'page_num': 0}, '260767_Ins_Notice_2': {
-    #     'file_path': 'C:/Users/Sam/Documents/Personal/Work/Scandoc Imaging/Defense and Insurance Folder/Ins Notice.pdf',
-    #     'page_num': 1}}
-    # 260768
-    # {'260768_Ins_Notice_1': {
-    #     'file_path': 'C:/Users/Sam/Documents/Personal/Work/Scandoc Imaging/Defense and Insurance Folder/Ins Notice.pdf',
-    #     'page_num': 2}, '260768_Ins_Notice_2': {
-    #     'file_path': 'C:/Users/Sam/Documents/Personal/Work/Scandoc Imaging/Defense and Insurance Folder/Ins Notice.pdf',
-    #     'page_num': 3}}
-    # 260769
-    # {'260769_Ins_Notice_1': {
-    #     'file_path': 'C:/Users/Sam/Documents/Personal/Work/Scandoc Imaging/Defense and Insurance Folder/Ins Notice.pdf',
-    #     'page_num': 4}, '260769_Ins_Notice_2': {
-    #     'file_path': 'C:/Users/Sam/Documents/Personal/Work/Scandoc Imaging/Defense and Insurance Folder/Ins Notice.pdf',
-    #     'page_num': 5}}
-    # 260770
-    # {'260770_Ins_Notice_1': {
-    #     'file_path': 'C:/Users/Sam/Documents/Personal/Work/Scandoc Imaging/Defense and Insurance Folder/Ins Notice.pdf',
-    #     'page_num': 6}, '260770_Ins_Notice_2': {
-    #     'file_path': 'C:/Users/Sam/Documents/Personal/Work/Scandoc Imaging/Defense and Insurance Folder/Ins Notice.pdf',
-    #     'page_num': 7}}
-
-    # breakpoint()
     process_sdt_pdfs()
-
-    # save_json_log()
+    save_json_log()
 
 
 def run_script(window):
@@ -415,19 +284,24 @@ def run_script(window):
     search_and_save_locations()
     print('Done!')
 
-    # for job in JOB_LIST:
-    #     print('\nCreating New PDFs...')
-    #     merge_pdfs()
-    #     print('Done!')
-    #
-    #     print('\nOpening Output Folder...')
-    #     util.open_folder_explorer(OUTPUT.get_field_path())
-    #     print('Done!')
+    print('\nCreating Output Folders')
+    for job in JOB_LIST:
+        job.set_output_path(os.path.join(OUTPUT.get_field_path(), f'{job.get_job_attributes()["name"]} Output'))
+    util.create_program_folders([job.get_output_path() for job in JOB_LIST])
 
-        # print('\nClosing Program...')
-        # window.close()
-        #
-        # end_time = datetime.now()
-        # run_time = end_time - start_time
-        # print('\nProgram Run Time:', run_time)
+    for job in JOB_LIST:
+        print('\nCreating New PDFs...')
+        merge_pdfs(job)
+        print('Done!')
+
+    print('\nOpening Output Folder...')
+    util.open_folder_explorer(OUTPUT.get_field_path())
+    print('Done!')
+
+    print('\nClosing Program...')
+    window.close()
+
+    end_time = datetime.now()
+    run_time = end_time - start_time
+    print('\nProgram Run Time:', run_time)
 

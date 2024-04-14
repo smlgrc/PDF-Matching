@@ -32,13 +32,14 @@ class ReferenceNumber:
 
 
 class FileSystemObject:
-    def __init__(self, field_name, field_path, field_path_name, field_type, job_attributes, master_dict):
+    def __init__(self, field_name, field_path, field_path_name, field_type, job_attributes, master_dict, output_path):
         self.field_name: str = field_name
         self.field_path: str = field_path
         self.field_path_name: str = field_path_name
         self.field_type: str = field_type
         self.job_attributes: dict = job_attributes
         self.master_dict: dict = master_dict
+        self.output_path: str = output_path
 
     def set_field_name(self, field_name): self.field_name = field_name
     def set_field_path(self, field_path): self.field_path = field_path
@@ -46,6 +47,7 @@ class FileSystemObject:
     def set_field_type(self, field_type): self.field_type = field_type
     def set_job_attributes(self, job_attributes): self.job_attributes = job_attributes
     def set_master_dict(self, master_dict): self.master_dict = master_dict
+    def set_output_path(self, output_path): self.output_path = output_path
 
     def get_field_name(self): return self.field_name
     def get_field_path(self): return self.field_path
@@ -53,6 +55,7 @@ class FileSystemObject:
     def get_field_type(self): return self.field_type
     def get_job_attributes(self): return self.job_attributes
     def get_master_dict(self): return self.master_dict
+    def get_output_path(self): return self.output_path
 
     def get_gui_field(self):
         gui_list = [
@@ -130,7 +133,7 @@ def load_gui_settings(gui_path: str) -> configparser.ConfigParser:
         # Create config.ini file with default settings
         config = configparser.ConfigParser()
         config['GUI'] = {
-            'window_title': 'Scandoc Imaging Pdf Merger',
+            'window_title': 'Scandoc Imaging PDF Merger',
             'font_size': '16',
             'font_family': 'Arial',
             'theme': 'SystemDefault'
