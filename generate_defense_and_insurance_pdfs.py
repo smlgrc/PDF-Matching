@@ -43,6 +43,7 @@ MASTER_DEFENSE_DICT: dict = {}
 MASTER_INSURANCE_DICT: dict = {}
 PROJECT_OBJECTS: list[FSO] = [DEFENSE, INSURANCE, EXCEL, SUBPOENA, OUTPUT]
 JOB_LIST: list[FSO] = [DEFENSE, INSURANCE]
+VALID_DEFENSE_REF_LIST: set = set()
 
 
 PROGRAM_FILES_PATH: str = resource_path("Program Files")
@@ -114,7 +115,7 @@ def process_sdt_pdfs():
 
 
 def process_job_pdfs(job: FSO):
-    global MASTER_DICT, MASTER_LIST, JOB_LIST
+    global MASTER_DICT, MASTER_LIST, JOB_LIST, VALID_DEFENSE_REF_LIST
     page: int = 0
     current_base_ref_num: str = ""
     pdfFileObj = open(job.get_field_path(), 'rb')
@@ -138,6 +139,8 @@ def process_job_pdfs(job: FSO):
                 current_base_ref_num = base_ref_num
 
             if current_base_ref_num in MASTER_LIST:
+                if job.get_field_name() == 'Defense PDF File':
+                    VALID_DEFENSE_REF_LIST.add(current_base_ref_num)
                 ref_num_match = {
                     'file_path': job.get_field_path(),
                     'page_num': page_num
@@ -169,7 +172,10 @@ def merge_pdfs(job: FSO):
 
     # for base_ref_num, ref_num_matches in MASTER_DICT.items():
     for base_ref_num, ref_num_matches in job.get_master_dict().items():
-        print(f'    Processing {base_ref_num}-Invoices...')
+        if base_ref_num not in VALID_DEFENSE_REF_LIST and job.get_field_name() == 'Defense PDF File':
+            continue
+
+        print(f'    Processing {base_ref_num}-{job.get_job_attributes()["abbreviation"]}...')
         pdfOutputPath = os.path.join(job_output_path, f'{base_ref_num}-{job.get_job_attributes()["abbreviation"]}.pdf')
         pdfOutputFile = open(pdfOutputPath, 'wb')
         pdfWriter = PyPDF2.PdfWriter()
@@ -290,7 +296,7 @@ def run_script(window):
     util.create_program_folders([job.get_output_path() for job in JOB_LIST])
 
     for job in JOB_LIST:
-        print('\nCreating New PDFs...')
+        print(f'\nCreating New {job.get_job_attributes()["name"]} PDFs...')
         merge_pdfs(job)
         print('Done!')
 
