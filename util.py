@@ -60,12 +60,13 @@ class FileSystemObject:
     def get_gui_field(self):
         gui_list = [
             Gui.Text(f"{self.field_name}:"),
-            Gui.Input(key=f"{self.field_name}", default_text=self.field_path, size=(60, 0))
+            Gui.Input(key=f"{self.field_name}", default_text=self.field_path, size=(60, 0), enable_events=True)
         ]
         if self.field_type == 'File':
-            gui_list.append(Gui.FileBrowse(button_text=f'Select {self.field_type}'))
+            gui_list.append(Gui.FileBrowse(button_text=f'Select {self.field_type}', key=f"{self.field_name}"))
+            gui_list.append(Gui.Button(button_text="Open File", key=f"{self.field_name} file open"))
         else:
-            gui_list.append(Gui.FolderBrowse(button_text=f'Select {self.field_type}'))
+            gui_list.append(Gui.FolderBrowse(button_text=f'Select {self.field_type}', size=(19, 0), key=f"{self.field_name}"))
         gui_list.append(Gui.Button(button_text="Open Folder", key=f"{self.field_name} folder open"))
         return gui_list
 

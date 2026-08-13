@@ -1,8 +1,11 @@
 import configparser
 import sys
 
+from PyPDF2 import PdfReader, PdfWriter
+
 import generate_defense_and_insurance_pdfs
 import generate_invoice_pdfs
+import generate_rebill_pdfs
 import testing
 import util
 import logging
@@ -27,7 +30,7 @@ GUI_CONFIG_PATH: str = os.path.join(CONFIG_FOLDER_PATH, r"gui_config.ini")
 
 PROGRAM_FILES_PATH: str = resource_path("Program Files")
 SI_LOGO_PATH: str = resource_path(os.path.join(PROGRAM_FILES_PATH, r"si_logo_path.png"))
-PROGRAM_LIST = ['Invoices', 'Defense & Insurance']
+PROGRAM_LIST = ['Rebill', 'Invoices', 'Defense & Insurance']
 # GUI_CONFIG_PATHS: list[str] = [os.path.join(CONFIG_FOLDER_PATH, rf"{program}_gui_config.ini") for program in PROGRAM_LIST]
 
 
@@ -91,6 +94,8 @@ def launch_gui():
                     generate_invoice_pdfs.launch_gui()
                 elif folder_type == 'Defense & Insurance':
                     generate_defense_and_insurance_pdfs.launch_gui()
+                elif folder_type == 'Rebill':
+                    generate_rebill_pdfs.launch_gui()
 
         # Close the window
         # window.close()
@@ -103,6 +108,19 @@ def main():
     util.create_program_folders([CONFIG_FOLDER_PATH])
     util.setup_logging(LOG_FILE_PATH)
     launch_gui()
+
+
+def make_pdf(input_pdf, output_pdf, page_range):
+    """Deletes specified pages from a PDF."""
+    pdf_reader = PdfReader(input_pdf)
+    pdf_writer = PdfWriter()
+
+    for page_num in range(len(pdf_reader.pages)):
+        if page_num in page_range:
+            pdf_writer.add_page(pdf_reader.pages[page_num])
+
+    with open(output_pdf, 'wb') as output:
+        pdf_writer.write(output)
 
 
 if __name__ == '__main__':

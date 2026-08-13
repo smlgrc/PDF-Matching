@@ -24,7 +24,7 @@ def resource_path(relative_path: str):
     return os.path.join(base_path, relative_path)
 
 
-PROGRAM_NAME: str = "Invoice Program"
+PROGRAM_NAME: str = "Rebill Program"
 CONFIG_FOLDER_PATH: str = "Config Files"
 LOG_FILE_PATH: str = os.path.join(CONFIG_FOLDER_PATH, r"Scandoc_Imaging_PDF_Merger_log_file.log")
 MASTER_DICT_FILE_PATH = os.path.join(CONFIG_FOLDER_PATH, r"master_dict_log.txt")
@@ -32,10 +32,8 @@ GUI_CONFIG_PATH: str = os.path.join(CONFIG_FOLDER_PATH, r"gui_config.ini")
 
 INVOICE: FSO = FSO("Invoice PDF Folder", "", "INVOICE_FOLDER_PATH", "Folder", {"name": "Invoice", "abbreviation": "Inv"}, None, '')
 EXCEL: FSO = FSO("Reference Number Excel File", "", "EXCEL_FILE_PATH", "File", None, None, None)
-LETTERS: FSO = FSO("Letters PDF File", "", "LETTERS_FILE_PATH", "File", None, None, None)
-CASES: FSO = FSO("Cases PDF File", "", "CASES_FILE_PATH", "File", None, None, None)
 OUTPUT: FSO = FSO("Output Folder", "", "OUTPUT_FOLDER_PATH", "Folder", None, None, None)
-PROJECT_OBJECTS: list[FSO] = [EXCEL, LETTERS, CASES, INVOICE, OUTPUT]
+PROJECT_OBJECTS: list[FSO] = [EXCEL, INVOICE, OUTPUT]
 
 PROGRAM_FILES_PATH: str = resource_path("Program Files")
 SI_LOGO_PATH: str = resource_path(os.path.join(PROGRAM_FILES_PATH, r"si_logo_path.png"))
@@ -57,70 +55,6 @@ def initialize_master_dict():
     # initialize master_list
     for ref in MASTER_LIST:
         MASTER_DICT[ref] = {}
-
-
-def process_letter_pdf():
-    global MASTER_DICT, MASTER_LIST
-    page: int = 0
-    pdfFileObj = open(LETTERS.get_field_path(), 'rb')
-    try:
-        pdfReader: PdfReader = PdfReader(pdfFileObj, strict=False)
-        pdfPages: list[PageObject] = pdfReader.pages
-
-        for i in range(len(pdfPages)):
-            pageObj: PyPDF2._page.PageObject = pdfReader.pages[i]
-            page_num = pdfReader.get_page_number(pageObj)
-            pageTxt: str = pageObj.extract_text().lower()
-
-            if pageTxt == '' or pageTxt.isspace():
-                continue
-
-            # if there ever is an issue, I can implement a solution that strips all spaces from pageTxt
-            split_word = 'Ref: '.lower()
-            base_ref_num = pageTxt.partition(split_word)[2].partition("\n")[0].strip()
-
-            if base_ref_num in MASTER_LIST:
-                ref_num_match = {
-                    'file_path': LETTERS.get_field_path(),
-                    'page_num': page_num
-                }
-                page += 1
-                ref_num_letter = f'{base_ref_num}-letter-{str(page)}'
-                MASTER_DICT[base_ref_num][ref_num_letter] = ref_num_match
-                if page == 2:
-                    page = 0
-    except Exception as e:  # PyPDF2.errors.PdfReadError:
-        print(f'{e} <- here')
-    pdfFileObj.close()
-
-
-def process_case_pdf():
-    global MASTER_DICT, MASTER_LIST
-    pdfFileObj = open(CASES.get_field_path(), 'rb')
-    try:
-        pdfReader: PdfReader = PdfReader(pdfFileObj, strict=False)
-        pdfPages: list[PageObject] = pdfReader.pages
-        for i in range(len(pdfPages)):
-            pageObj: PyPDF2._page.PageObject = pdfReader.pages[i]
-            pageTxt: str = pageObj.extract_text().lower()
-
-            if pageTxt == '' or pageTxt.isspace():
-                continue
-
-            split_word = 'Ref#: '.lower()
-            base_ref_num = pageTxt.partition(split_word)[2].partition(" ")[0].strip()
-            page_num = pdfReader.get_page_number(pageObj)
-
-            if base_ref_num in MASTER_LIST:
-                ref_num_match = {
-                    'file_path': CASES.get_field_path(),
-                    'page_num': page_num
-                }
-                ref_num_case = f'{base_ref_num}-case'
-                MASTER_DICT[base_ref_num][ref_num_case] = ref_num_match
-    except Exception as e:
-        print(f'{e} <- here')
-    pdfFileObj.close()
 
 
 def process_invoice_folder():
@@ -188,8 +122,6 @@ def save_json_log():
 
 
 def search_and_save_locations():
-    process_letter_pdf()
-    process_case_pdf()
     process_invoice_folder()
     save_json_log()
 
@@ -257,7 +189,7 @@ def launch_gui():
     global PROJECT_OBJECTS
 
     gui_config: configparser.ConfigParser = util.load_gui_settings(GUI_CONFIG_PATH)
-    window_title: str = 'Invoice PDF Merger'
+    window_title: str = 'Rebill PDF Merger'
     font_family: str = gui_config.get('GUI', 'font_family', fallback='')
     font_size: int = int(gui_config.get('GUI', 'font_size', fallback=0))
     theme: str = gui_config.get('GUI', 'theme', fallback='SystemDefault')
@@ -268,7 +200,7 @@ def launch_gui():
     for object in PROJECT_OBJECTS:
         object.set_field_path(gui_config.get(f'{PROGRAM_NAME} Folders', object.get_field_path_name(), fallback=''))
 
-    program_title = "Invoice PDF Merger"
+    program_title = "Rebill PDF Merger"
     layout: list = util.generate_window_layout(SI_LOGO_PATH, program_title, PROJECT_OBJECTS)
 
     window: Gui.PySimpleGUI.Window = Gui.Window(window_title, layout)
@@ -305,7 +237,7 @@ def launch_gui():
         if event == "Generate PDF Files":
             if util.verify_paths(values, PROJECT_OBJECTS):
                 set_paths_and_save_config_settings(values, gui_config)
-                run_script(window)
+                # run_script(window)
             else:
                 Gui.popup_error("Missing or Invalid Filepath(s)\nPlease check that you've selected all folders")
 
