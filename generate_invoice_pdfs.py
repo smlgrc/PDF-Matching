@@ -284,13 +284,9 @@ def launch_gui():
             if str(e) == "'NoneType' object has no attribute 'split'":
                 sys.exit()
 
-        print(event)
-
         if event in (Gui.WINDOW_CLOSED, "Exit"):
             break
-        if any('Select' in item for item in select_list) and any('File' in item for item in select_list):
-            breakpoint()
-        if ('folder' in select_list or 'file' in select_list) and 'open' in select_list:
+        if 'folder' in select_list and 'open' in select_list:
             folder_path = ''
             for k, v in values.items():
                 if select_list[0].lower() in k.lower():
@@ -298,10 +294,7 @@ def launch_gui():
             if folder_path == '':
                 Gui.popup_error("Please Select a Valid Folder First.")
             else:
-                if 'folder' in select_list:
-                    util.open_folder_explorer(os.path.dirname(folder_path))
-                else:
-                    util.open_folder_explorer(folder_path)
+                util.open_folder_explorer(folder_path)
         if event == "Generate PDF Files":
             if util.verify_paths(values, PROJECT_OBJECTS):
                 set_paths_and_save_config_settings(values, gui_config)

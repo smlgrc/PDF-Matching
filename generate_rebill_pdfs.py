@@ -58,7 +58,14 @@ def initialize_master_dict():
 
 
 def process_invoice_folder():
+    # TODO: KEEPING TRACK OF PAGE DOESNT WORK
+    #  SINCE THERE COULD BE MORE THAN ONE FILE
+    #  PERHAPS KEEPING TRACK OF A MASTER PAGE DICT
+    #  OR IF THERE DOESN'T EXIST ANY FOR BASE REFERENCE, START WITH 1
+    #  THEN IF IT EN
+
     global MASTER_DICT, MASTER_LIST
+    page: int = 0
     for subdir, dirs, files in os.walk(INVOICE.get_field_path()):
         """
         subdir = current parent folder name
@@ -99,17 +106,31 @@ def process_invoice_folder():
 
                     pageTxt = pageTxt.replace(' ', '')
 
-                    split_word = 'invoicenumber:'.lower()
-                    ref_num_extract = pageTxt.partition(split_word)[2].partition("invoicedate:")[0]
-                    base_num_extract = ref_num_extract.partition('-')[0]
+                    base_ref_num: str = ''
+                    if 'invoicenumber:' in pageTxt:
+                        split_word = 'invoicenumber:'.lower()
+                        ref_num_extract = pageTxt.partition(split_word)[2].partition("invoicedate:")[0]
+                        base_ref_num = ref_num_extract.partition('-')[0]
+                    elif 'proofofservice' in pageTxt:
+                        split_word = 'ref:'.lower()
+                        base_ref_num = pageTxt.partition(split_word)[2].partition("\n")[0].strip()
 
-                    if base_num_extract in MASTER_LIST:
+                    if base_ref_num in MASTER_LIST:
                         ref_num_match = {
                             'file_path': file_path,
                             'page_num': page_num
                         }
 
-                        MASTER_DICT[base_num_extract][ref_num_extract] = ref_num_match
+                        # if master dict empty or if there aren't any pages, set first page
+                        if not MASTER_DICT[base_ref_num]:# or max(MASTER_DICT[base_ref_num], key=util.extract_end_num) == -1:
+                            ref_num_letter = f'{base_ref_num}-invoice-page-1'
+                            MASTER_DICT[base_ref_num][ref_num_letter] = ref_num_match
+                        # else page does exist for base ref number, add page number
+                        else:
+                            best_key = max(MASTER_DICT[base_ref_num], key=util.extract_end_num)
+                            next_page = util.extract_end_num(best_key) + 1
+                            ref_num_letter = f'{base_ref_num}-invoice-page-{next_page}'
+                            MASTER_DICT[base_ref_num][ref_num_letter] = ref_num_match
 
             except Exception as e:  # PyPDF2.errors.PdfReadError:
                 print(f'{e} <- here')
@@ -134,8 +155,8 @@ def merge_pdfs():
     util.create_program_folders([job_output_path])
 
     for base_ref_num, ref_num_matches in MASTER_DICT.items():
-        print(f'    Processing {base_ref_num}-Invoices...')
-        pdfOutputPath = os.path.join(job_output_path, f'{base_ref_num}-Invoices.pdf')
+        print(f'    Processing {base_ref_num}-Rebill...')
+        pdfOutputPath = os.path.join(job_output_path, f'{base_ref_num}-Rebill.pdf')
         pdfOutputFile = open(pdfOutputPath, 'wb')
         pdfWriter = PyPDF2.PdfWriter()
 
@@ -237,7 +258,7 @@ def launch_gui():
         if event == "Generate PDF Files":
             if util.verify_paths(values, PROJECT_OBJECTS):
                 set_paths_and_save_config_settings(values, gui_config)
-                # run_script(window)
+                run_script(window)
             else:
                 Gui.popup_error("Missing or Invalid Filepath(s)\nPlease check that you've selected all folders")
 
@@ -252,6 +273,8 @@ def run_script(window):
     print('\nSearching PDFs...')
     search_and_save_locations()
     print('Done!')
+
+    breakpoint()
 
     print('\nCreating New PDFs...')
     merge_pdfs()

@@ -1,6 +1,7 @@
 import configparser
 import logging
 import os
+import re
 import subprocess
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
@@ -89,6 +90,11 @@ def clear_program_folders(path_list: list):
     for path in path_list:
         if os.path.exists(path):
             clear_folder(path)
+
+# Extract all digits, convert to int. Default to 0 if no number is found.
+def extract_end_num(string_key: str) -> int:
+    match = re.search(r'\d+$', string_key)
+    return int(match.group()) if match else -1
 
 
 def create_program_folders(path_list: list):
