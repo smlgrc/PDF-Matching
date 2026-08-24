@@ -30,7 +30,7 @@ LOG_FILE_PATH: str = os.path.join(CONFIG_FOLDER_PATH, r"Scandoc_Imaging_PDF_Merg
 MASTER_DICT_FILE_PATH = os.path.join(CONFIG_FOLDER_PATH, r"master_dict_log.txt")
 GUI_CONFIG_PATH: str = os.path.join(CONFIG_FOLDER_PATH, r"gui_config.ini")
 
-INVOICE: FSO = FSO("Invoice PDF Folder", "", "INVOICE_FOLDER_PATH", "Folder", {"name": "Invoice", "abbreviation": "Inv"}, None, '')
+INVOICE: FSO = FSO("Invoice PDF Folder", "", "INVOICE_FOLDER_PATH", "Folder", {"name": "Rebill", "abbreviation": "Inv"}, None, '')
 EXCEL: FSO = FSO("Reference Number Excel File", "", "EXCEL_FILE_PATH", "File", None, None, None)
 OUTPUT: FSO = FSO("Output Folder", "", "OUTPUT_FOLDER_PATH", "Folder", None, None, None)
 PROJECT_OBJECTS: list[FSO] = [EXCEL, INVOICE, OUTPUT]
@@ -58,14 +58,7 @@ def initialize_master_dict():
 
 
 def process_invoice_folder():
-    # TODO: KEEPING TRACK OF PAGE DOESNT WORK
-    #  SINCE THERE COULD BE MORE THAN ONE FILE
-    #  PERHAPS KEEPING TRACK OF A MASTER PAGE DICT
-    #  OR IF THERE DOESN'T EXIST ANY FOR BASE REFERENCE, START WITH 1
-    #  THEN IF IT EN
-
     global MASTER_DICT, MASTER_LIST
-    page: int = 0
     for subdir, dirs, files in os.walk(INVOICE.get_field_path()):
         """
         subdir = current parent folder name
@@ -99,21 +92,24 @@ def process_invoice_folder():
                 for i in range(len(pdfPages)):
                     pageObj: PyPDF2._page.PageObject = pdfReader.pages[i]
                     page_num = pdfReader.get_page_number(pageObj)
-                    pageTxt: str = pageObj.extract_text().lower()
+                    pageText: str = pageObj.extract_text().lower()
 
-                    if pageTxt == '' or pageTxt.isspace():
+                    if pageText == '' or pageText.isspace():
                         continue
 
-                    pageTxt = pageTxt.replace(' ', '')
+                    pageText = pageText.replace('\n', ' ')
+                    pageText = pageText.replace(' ', '')
 
                     base_ref_num: str = ''
-                    if 'invoicenumber:' in pageTxt:
+
+                    if 'invoicenumber:' in pageText:
                         split_word = 'invoicenumber:'.lower()
-                        ref_num_extract = pageTxt.partition(split_word)[2].partition("invoicedate:")[0]
+                        ref_num_extract = pageText.partition(split_word)[2].partition("invoicedate:")[0]
                         base_ref_num = ref_num_extract.partition('-')[0]
-                    elif 'proofofservice' in pageTxt:
-                        split_word = 'ref:'.lower()
-                        base_ref_num = pageTxt.partition(split_word)[2].partition("\n")[0].strip()
+                    elif 'proofofservice' in pageText:
+                        split_word = 'itemizedbillingfor'.lower()
+                        ref_num_extract = pageText.partition(split_word)[2].partition("ontheinterested")[0].strip()
+                        base_ref_num = ref_num_extract.partition('-')[0]
 
                     if base_ref_num in MASTER_LIST:
                         ref_num_match = {
@@ -160,12 +156,7 @@ def merge_pdfs():
         pdfOutputFile = open(pdfOutputPath, 'wb')
         pdfWriter = PyPDF2.PdfWriter()
 
-        # ref_num_keys = list(ref_num_matches.keys())
-        # ref_num_keys.sort()
-        # ref_num_keys = sort_ref_num_list(ref_num_keys)
-        # sorted_ref_num_matches = {key: ref_num_matches[i] for key in ref_num_keys}
         for ref_num_match, ref_num_attributes in ref_num_matches.items():
-            # file_path = os.path.join(ref_num_attributes['file_path'])
             file_path = os.path.join(ref_num_attributes.get('file_path', 'No path found'))
             page_num: str = ref_num_attributes['page_num']
 
@@ -241,17 +232,16 @@ def launch_gui():
 
         if event in (Gui.WINDOW_CLOSED, "Exit"):
             break
-        if any('Select' in item for item in select_list) and any('File' in item for item in select_list):
-            breakpoint()
         if ('folder' in select_list or 'file' in select_list) and 'open' in select_list:
             folder_path = ''
             for k, v in values.items():
                 if select_list[0].lower() in k.lower():
                     folder_path = v
+                    break
             if folder_path == '':
                 Gui.popup_error("Please Select a Valid Folder First.")
             else:
-                if 'folder' in select_list:
+                if 'folder' in select_list and any(item.lower() == 'file'.lower() for item in select_list):
                     util.open_folder_explorer(os.path.dirname(folder_path))
                 else:
                     util.open_folder_explorer(folder_path)
@@ -273,8 +263,6 @@ def run_script(window):
     print('\nSearching PDFs...')
     search_and_save_locations()
     print('Done!')
-
-    breakpoint()
 
     print('\nCreating New PDFs...')
     merge_pdfs()

@@ -153,6 +153,22 @@ def load_gui_settings(gui_path: str) -> configparser.ConfigParser:
     return config
 
 
+def find_sequence(sentence_list, target_seq):
+    # Length of the sequence we are looking for
+    seq_len = len(target_seq)
+
+    # Loop through the list up to the last possible starting point
+    for i in range(len(sentence_list) - seq_len + 1):
+        # Slice the list to get the current window
+        window = sentence_list[i: i + seq_len]
+
+        # Check if the window matches our target sequence
+        if window == target_seq:
+            return f"Found sequence starting at index {i}"
+
+    return "Sequence not found"
+
+
 def generate_window_layout(si_logo_path, program_title, project_objects: list[FileSystemObject]) -> list:
     select_paths = []
     for object in project_objects:
